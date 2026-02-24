@@ -1,9 +1,13 @@
 const FLY_API_URL = "https://api.machines.dev/v1";
 const FLY_GQL_URL = "https://api.fly.io/graphql";
 
+function env(key: string): string {
+  return (process.env[key] || "").trim();
+}
+
 function flyHeaders() {
   return {
-    Authorization: `Bearer ${process.env.FLY_API_TOKEN!}`,
+    Authorization: `Bearer ${env("FLY_API_TOKEN")}`,
     "Content-Type": "application/json",
   };
 }
@@ -47,7 +51,7 @@ const PLAN_SIZES: Record<string, { cpus: number; memoryMb: number; cpuKind: stri
 export async function createApp(appName: string): Promise<void> {
   await flyFetch("/apps", {
     method: "POST",
-    body: JSON.stringify({ app_name: appName, org_slug: process.env.FLY_ORG || "personal" }),
+    body: JSON.stringify({ app_name: appName, org_slug: env("FLY_ORG") || "personal" }),
   });
 }
 
@@ -89,11 +93,11 @@ export async function createMachine(
   region: string = "iad"
 ): Promise<{ machineId: string; instanceUrl: string }> {
   const size = PLAN_SIZES[plan] || PLAN_SIZES.starter;
-  const openClawImage = process.env.OPENCLAW_DOCKER_IMAGE || "ghcr.io/openclaw/openclaw:latest";
+  const openClawImage = env("OPENCLAW_DOCKER_IMAGE") || "ghcr.io/openclaw/openclaw:latest";
 
   // OpenClaw config: enable token auth + bypass device pairing for Fly.io proxy
   // Passed as env var and written to file at boot (can't use Fly `files` — volume mount overwrites it)
-  const defaultModel = process.env.OPENCLAW_DEFAULT_MODEL || "openrouter/moonshotai/kimi-k2.5";
+  const defaultModel = env("OPENCLAW_DEFAULT_MODEL") || "openrouter/moonshotai/kimi-k2.5";
   const openclawConfig = JSON.stringify({
     gateway: {
       mode: "local",

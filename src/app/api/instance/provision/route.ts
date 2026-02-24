@@ -54,14 +54,15 @@ export async function POST() {
       NODE_OPTIONS: "--max-old-space-size=1536",
       OPENCLAW_GATEWAY_TOKEN: gatewayToken,
     };
-    if (process.env.OPENCLAW_DEFAULT_ANTHROPIC_KEY) {
-      envVars.ANTHROPIC_API_KEY = process.env.OPENCLAW_DEFAULT_ANTHROPIC_KEY;
+    const envVal = (key: string) => (process.env[key] || "").trim();
+    if (envVal("OPENCLAW_DEFAULT_ANTHROPIC_KEY")) {
+      envVars.ANTHROPIC_API_KEY = envVal("OPENCLAW_DEFAULT_ANTHROPIC_KEY");
     }
-    if (process.env.OPENCLAW_DEFAULT_OPENAI_KEY) {
-      envVars.OPENAI_API_KEY = process.env.OPENCLAW_DEFAULT_OPENAI_KEY;
+    if (envVal("OPENCLAW_DEFAULT_OPENAI_KEY")) {
+      envVars.OPENAI_API_KEY = envVal("OPENCLAW_DEFAULT_OPENAI_KEY");
     }
-    if (process.env.OPENCLAW_DEFAULT_OPENROUTER_KEY) {
-      envVars.OPENROUTER_API_KEY = process.env.OPENCLAW_DEFAULT_OPENROUTER_KEY;
+    if (envVal("OPENCLAW_DEFAULT_OPENROUTER_KEY")) {
+      envVars.OPENROUTER_API_KEY = envVal("OPENCLAW_DEFAULT_OPENROUTER_KEY");
     }
     // Default model is configured in openclaw.json (agents.defaults.model), not env vars
 
