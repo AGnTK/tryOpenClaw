@@ -41,6 +41,8 @@ export function InstanceStatus() {
   const [data, setData] = useState<InstanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [restarting, setRestarting] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [stopping, setStopping] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -69,6 +71,26 @@ export function InstanceStatus() {
       setTimeout(fetchStatus, 3000);
     } finally {
       setRestarting(false);
+    }
+  }
+
+  async function handleStart() {
+    setStarting(true);
+    try {
+      await fetch("/api/instance/start", { method: "POST" });
+      setTimeout(fetchStatus, 3000);
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  async function handleStop() {
+    setStopping(true);
+    try {
+      await fetch("/api/instance/stop", { method: "POST" });
+      setTimeout(fetchStatus, 3000);
+    } finally {
+      setStopping(false);
     }
   }
 
@@ -269,21 +291,53 @@ export function InstanceStatus() {
               onClick={fetchStatus}
             >
               <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-              Refresh Status
+              Refresh
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRestart}
-              disabled={restarting || data.tenantStatus !== "active"}
-            >
-              {restarting ? (
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-              )}
-              Restart Instance
-            </Button>
+            {isSleeping && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleStart}
+                disabled={starting}
+              >
+                {starting ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Power className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                Start
+              </Button>
+            )}
+            {isRunning && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleStop}
+                  disabled={stopping}
+                >
+                  {stopping ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Power className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  Stop
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRestart}
+                  disabled={restarting}
+                >
+                  {restarting ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  Restart
+                </Button>
+              </>
+            )}
             <div className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
               Plan: <span className="font-medium text-foreground capitalize">{data.plan}</span>
               &middot; Region: <span className="font-medium text-foreground uppercase">{data.region || "iad"}</span>

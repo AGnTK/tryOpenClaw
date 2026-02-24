@@ -178,14 +178,37 @@ export async function getMachineStatus(
 }
 
 export async function startMachine(appName: string, machineId: string): Promise<void> {
+  await setAutostart(appName, machineId, true);
   await flyFetch(`/apps/${appName}/machines/${machineId}/start`, {
     method: "POST",
   });
 }
 
 export async function stopMachine(appName: string, machineId: string): Promise<void> {
+  await setAutostart(appName, machineId, false);
   await flyFetch(`/apps/${appName}/machines/${machineId}/stop`, {
     method: "POST",
+  });
+}
+
+async function setAutostart(appName: string, machineId: string, enabled: boolean): Promise<void> {
+  const res = await flyFetch(`/apps/${appName}/machines/${machineId}`);
+  const machine = await res.json();
+
+  // Update autostart on all services
+  const services = machine.config?.services?.map((s: Record<string, unknown>) => ({
+    ...s,
+    autostart: enabled,
+  })) || [];
+
+  await flyFetch(`/apps/${appName}/machines/${machineId}`, {
+    method: "POST",
+    body: JSON.stringify({
+      config: {
+        ...machine.config,
+        services,
+      },
+    }),
   });
 }
 

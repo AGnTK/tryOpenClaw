@@ -87,6 +87,8 @@ src/
 │       ├── instance/
 │       │   ├── provision/route.ts       # POST: User-triggered Fly.io provisioning
 │       │   ├── status/route.ts          # GET: Live machine status from Fly
+│       │   ├── start/route.ts           # POST: Start stopped machine (re-enables autostart)
+│       │   ├── stop/route.ts            # POST: Stop running machine (disables autostart)
 │       │   ├── restart/route.ts         # POST: Restart Fly machine
 │       │   └── destroy/route.ts         # POST: Destroy machine (cancelled only)
 │       └── billing/
@@ -224,3 +226,6 @@ Fly's `files` config writes files before volume mounts. If the file path is insi
 
 ### OpenClaw Requires `allowInsecureAuth` for Non-Localhost
 Without `allowInsecureAuth: true` in `openclaw.json`, non-localhost WebSocket connections get rejected with "pairing required" (1008). The config must also set `auth.mode: "token"` and include `trustedProxies` for Fly's internal networks.
+
+### Fly `autostart` Conflicts With Manual Stop
+Fly services with `autostart: true` auto-start the machine on any incoming HTTP request. Manual stop via API appears to do nothing because the next request (dashboard polling, browser tab) triggers autostart. Fix: `stopMachine()` disables `autostart` in the machine's service config before stopping; `startMachine()` re-enables it.
