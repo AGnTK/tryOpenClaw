@@ -2,20 +2,24 @@ import Stripe from "stripe";
 
 let _stripe: Stripe | null = null;
 
+function env(key: string): string {
+  return (process.env[key] || "").trim();
+}
+
 function getStripe(): Stripe {
   if (!_stripe) {
-    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    _stripe = new Stripe(env("STRIPE_SECRET_KEY"));
   }
   return _stripe;
 }
 
 function getPriceId(plan: string): string {
-  const priceMap: Record<string, string | undefined> = {
-    starter: process.env.STRIPE_PRICE_STARTER,
-    pro: process.env.STRIPE_PRICE_PRO,
-    enterprise: process.env.STRIPE_PRICE_ENTERPRISE,
+  const priceMap: Record<string, string> = {
+    starter: env("STRIPE_PRICE_STARTER"),
+    pro: env("STRIPE_PRICE_PRO"),
+    enterprise: env("STRIPE_PRICE_ENTERPRISE"),
   };
-  const id = priceMap[plan] || process.env.STRIPE_PRICE_PRO || process.env.STRIPE_PRICE_STARTER;
+  const id = priceMap[plan] || env("STRIPE_PRICE_PRO") || env("STRIPE_PRICE_STARTER");
   if (!id) throw new Error(`No price ID found for plan: ${plan}`);
   return id;
 }
@@ -29,8 +33,8 @@ export async function createCheckoutSession(
     mode: "subscription",
     customer_email: customerEmail,
     line_items: [{ price: getPriceId(plan), quantity: 1 }],
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel`,
+    success_url: `${env("NEXT_PUBLIC_APP_URL")}/checkout/success`,
+    cancel_url: `${env("NEXT_PUBLIC_APP_URL")}/checkout/cancel`,
     metadata: { userId, plan },
   });
 
@@ -40,7 +44,7 @@ export async function createCheckoutSession(
 export async function createPortalSession(customerId: string): Promise<string> {
   const session = await getStripe().billingPortal.sessions.create({
     customer: customerId,
-    return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
+    return_url: `${env("NEXT_PUBLIC_APP_URL")}/dashboard/billing`,
   });
   return session.url;
 }
@@ -52,6 +56,6 @@ export async function constructWebhookEvent(
   return getStripe().webhooks.constructEvent(
     body,
     signature,
-    process.env.STRIPE_WEBHOOK_SECRET!
+    env("STRIPE_WEBHOOK_SECRET")
   );
 }
