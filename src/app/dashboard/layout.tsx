@@ -27,7 +27,7 @@ export default async function DashboardLayout({
     // No subscription — redirect to Stripe Checkout
     let checkoutUrl: string | null = null;
     try {
-      checkoutUrl = await createCheckoutSession(user.email!, "starter", user.id);
+      checkoutUrl = await createCheckoutSession(user.email!, "pro", user.id);
     } catch (err) {
       console.error("[dashboard] Failed to create checkout:", err);
     }
