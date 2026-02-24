@@ -23,6 +23,7 @@ export async function GET() {
     return NextResponse.json({
       tenantStatus: tenant.status,
       machineState: null,
+      plan: tenant.plan,
     });
   }
 

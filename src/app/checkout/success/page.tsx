@@ -8,12 +8,12 @@ import { Loader2, CheckCircle } from "lucide-react";
 export default function CheckoutSuccessPage() {
   const router = useRouter();
   const [status, setStatus] = useState<"polling" | "ready" | "timeout">("polling");
-  const [attempts, setAttempts] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
 
     async function poll() {
+      // Wait for Stripe webhook to create the tenant record
       for (let i = 0; i < 30; i++) {
         if (cancelled) return;
 
@@ -21,7 +21,6 @@ export default function CheckoutSuccessPage() {
           const res = await fetch("/api/instance/status");
           if (res.ok) {
             setStatus("ready");
-            // Brief pause to show success state
             await new Promise((r) => setTimeout(r, 1500));
             if (!cancelled) router.push("/dashboard");
             return;
@@ -30,7 +29,6 @@ export default function CheckoutSuccessPage() {
           // Ignore network errors, keep polling
         }
 
-        setAttempts(i + 1);
         await new Promise((r) => setTimeout(r, 2000));
       }
 
@@ -57,8 +55,7 @@ export default function CheckoutSuccessPage() {
             <>
               <CardTitle>Taking Longer Than Expected</CardTitle>
               <CardDescription>
-                Your payment was received but instance setup is still in progress.
-                Please refresh the page or go to your dashboard.
+                Your payment was received. Please go to your dashboard to launch your instance.
               </CardDescription>
             </>
           ) : (
@@ -66,9 +63,9 @@ export default function CheckoutSuccessPage() {
               <div className="mx-auto mb-2">
                 <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
               </div>
-              <CardTitle>Setting Up Your Instance</CardTitle>
+              <CardTitle>Payment Received!</CardTitle>
               <CardDescription>
-                Payment received! Provisioning your OpenClaw instance...
+                Confirming your subscription...
               </CardDescription>
             </>
           )}

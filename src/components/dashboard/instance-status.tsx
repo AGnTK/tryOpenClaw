@@ -15,6 +15,7 @@ import {
   Copy,
   Check,
   Power,
+  Rocket,
 } from "lucide-react";
 
 type InstanceData = {
@@ -40,6 +41,8 @@ export function InstanceStatus() {
   const [data, setData] = useState<InstanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [restarting, setRestarting] = useState(false);
+  const [launching, setLaunching] = useState(false);
+  const [launchError, setLaunchError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const fetchStatus = useCallback(async () => {
@@ -77,6 +80,24 @@ export function InstanceStatus() {
     }
   }
 
+  async function handleLaunch() {
+    setLaunching(true);
+    setLaunchError(null);
+    try {
+      const res = await fetch("/api/instance/provision", { method: "POST" });
+      if (!res.ok) {
+        const body = await res.json();
+        setLaunchError(body.error || "Provisioning failed");
+      } else {
+        fetchStatus();
+      }
+    } catch {
+      setLaunchError("Network error. Please try again.");
+    } finally {
+      setLaunching(false);
+    }
+  }
+
   if (loading) {
     return (
       <Card>
@@ -92,6 +113,38 @@ export function InstanceStatus() {
       <Card>
         <CardContent className="flex items-center justify-center py-16">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (data.tenantStatus === "paid") {
+    return (
+      <Card className="border-primary/20 bg-gradient-to-br from-background to-primary/5">
+        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="mb-4 rounded-full bg-primary/10 p-4">
+            <Rocket className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-semibold">Payment Successful!</h2>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            Your account is ready. Click below to provision your OpenClaw instance on Fly.io. This usually takes 1-2 minutes.
+          </p>
+          {launchError && (
+            <p className="mt-3 text-sm text-destructive">{launchError}</p>
+          )}
+          <Button
+            size="lg"
+            className="mt-6 gap-2 px-8 text-base"
+            onClick={handleLaunch}
+            disabled={launching}
+          >
+            {launching ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Rocket className="h-5 w-5" />
+            )}
+            {launching ? "Launching..." : "Launch Your OpenClaw"}
+          </Button>
         </CardContent>
       </Card>
     );

@@ -4,8 +4,7 @@ import { constructWebhookEvent } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { tenants, billingEvents } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-import { createApp, createVolume, createMachine, stopMachine, updateMachineSize } from "@/lib/fly";
-import crypto from "crypto";
+import { stopMachine, updateMachineSize } from "@/lib/fly";
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -61,21 +60,14 @@ async function handleCheckoutCompleted(event: Stripe.Event) {
   const plan = session.metadata?.plan || "starter";
   if (!userId) return;
 
-  const appName = `oc-${crypto.randomBytes(6).toString("hex")}`;
-  const gatewayToken = crypto.randomBytes(32).toString("hex");
-  const region = "iad";
-
-  // Create tenant record
+  // Create tenant record — user must manually launch their instance from the dashboard
   const [tenant] = await db
     .insert(tenants)
     .values({
       userId,
       email: session.customer_email || "",
       plan,
-      status: "provisioning",
-      flyAppName: appName,
-      flyRegion: region,
-      gatewayToken,
+      status: "paid",
       stripeCustomerId: session.customer as string,
       stripeSubscriptionId: session.subscription as string,
     })
@@ -87,60 +79,6 @@ async function handleCheckoutCompleted(event: Stripe.Event) {
     eventType: event.type,
     tenantId: tenant.id,
   });
-
-  // Provision Fly.io instance (async — don't block webhook response)
-  provisionInstance(tenant.id, appName, plan, region, gatewayToken).catch((err) =>
-    console.error(`Provisioning failed for ${appName}:`, err)
-  );
-}
-
-async function provisionInstance(
-  tenantId: string,
-  appName: string,
-  plan: string,
-  region: string,
-  gatewayToken: string
-) {
-  try {
-    await createApp(appName);
-    const volumeId = await createVolume(appName, region);
-
-    const envVars: Record<string, string> = {
-      OPENCLAW_GATEWAY_TOKEN: gatewayToken,
-      OPENCLAW_STATE_DIR: "/root/.openclaw",
-    };
-    // Provide a default AI API key so the instance works out of the box
-    if (process.env.OPENCLAW_DEFAULT_ANTHROPIC_KEY) {
-      envVars.ANTHROPIC_API_KEY = process.env.OPENCLAW_DEFAULT_ANTHROPIC_KEY;
-    }
-    if (process.env.OPENCLAW_DEFAULT_OPENAI_KEY) {
-      envVars.OPENAI_API_KEY = process.env.OPENCLAW_DEFAULT_OPENAI_KEY;
-    }
-
-    const { machineId, instanceUrl } = await createMachine(
-      appName,
-      plan,
-      volumeId,
-      envVars,
-      region
-    );
-
-    await db
-      .update(tenants)
-      .set({
-        flyMachineId: machineId,
-        instanceUrl,
-        status: "active",
-        updatedAt: new Date(),
-      })
-      .where(eq(tenants.id, tenantId));
-  } catch (err) {
-    await db
-      .update(tenants)
-      .set({ status: "provisioning", updatedAt: new Date() })
-      .where(eq(tenants.id, tenantId));
-    throw err;
-  }
 }
 
 async function handleSubscriptionDeleted(event: Stripe.Event) {

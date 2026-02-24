@@ -6,6 +6,13 @@ Changes in `dev` since last merge to `master`. Clear after each merge (keep temp
 
 ## Pending Changes
 
+### Post-Payment Flow: Manual Instance Launch
+- **Stripe webhook no longer auto-provisions** — `checkout.session.completed` now sets tenant status to `"paid"` (no Fly.io calls)
+- **New provisioning API**: `POST /api/instance/provision` — user-triggered, creates Fly app/volume/machine, reverts to `"paid"` on failure so user can retry
+- **Dashboard "Launch Your OpenClaw" button** — shown when tenant status is `"paid"`, triggers provisioning on click
+- **Checkout success page simplified** — polls for tenant record then redirects to dashboard (no provisioning wait)
+- **Flow**: Payment → Dashboard → "Launch Your OpenClaw" → Provisioning → Active
+
 ### Landing Page Redesign
 - **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo) instead of being redirected to `/auth/login`
 - **New file**: `src/components/landing/landing-page.tsx` — full landing page component with all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)
