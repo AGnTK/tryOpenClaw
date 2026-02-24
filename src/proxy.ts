@@ -25,21 +25,23 @@ export async function proxy(request: NextRequest) {
     }
   );
 
+  // Use getSession for faster check (doesn't validate JWT with Supabase server)
+  // This avoids potential timing issues during OAuth callback redirects
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
   const { pathname } = request.nextUrl;
 
   // Protect dashboard and checkout routes
-  if ((pathname.startsWith("/dashboard") || pathname.startsWith("/checkout")) && !user) {
+  if ((pathname.startsWith("/dashboard") || pathname.startsWith("/checkout")) && !session) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
   }
 
   // Redirect logged-in users away from login page
-  if (pathname === "/auth/login" && user) {
+  if (pathname === "/auth/login" && session) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
