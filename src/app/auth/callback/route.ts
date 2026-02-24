@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
@@ -12,6 +12,10 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const cookieStore = await cookies();
+
+    // Store cookies to set on the final response
+    const cookiesToSet: { name: string; value: string; options: CookieOptions }[] = [];
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -20,28 +24,32 @@ export async function GET(request: NextRequest) {
           getAll() {
             return cookieStore.getAll();
           },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch {
-              // Ignore
-            }
+          setAll(cookies) {
+            cookies.forEach((cookie) => cookiesToSet.push(cookie));
           },
         },
       }
     );
 
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+    // Helper to create redirect with cookies
+    function redirectWithCookies(url: string): NextResponse {
+      const response = NextResponse.redirect(url);
+      cookiesToSet.forEach(({ name, value, options }) => {
+        response.cookies.set(name, value, options);
+      });
+      return response;
+    }
+
     if (error) {
       console.error("OAuth code exchange failed:", error.message);
-      return NextResponse.redirect(`${origin}/auth/login?error=auth_failed`);
+      return redirectWithCookies(`${origin}/auth/login?error=auth_failed`);
     }
 
     const user = data.user;
     if (!user) {
-      return NextResponse.redirect(`${origin}/auth/login?error=no_user`);
+      return redirectWithCookies(`${origin}/auth/login?error=no_user`);
     }
 
     // Check if user already has a paid tenant
@@ -51,7 +59,7 @@ export async function GET(request: NextRequest) {
 
     if (existing && existing.status !== "cancelled") {
       // Already subscribed — go to dashboard
-      return NextResponse.redirect(`${origin}/dashboard`);
+      return redirectWithCookies(`${origin}/dashboard`);
     }
 
     // No tenant — redirect to Stripe Checkout
@@ -63,11 +71,10 @@ export async function GET(request: NextRequest) {
         user.id
       );
       console.log("[callback] Stripe checkout URL:", checkoutUrl);
-      return NextResponse.redirect(checkoutUrl);
+      return redirectWithCookies(checkoutUrl);
     } catch (err) {
       console.error("[callback] Stripe checkout failed:", err);
-      // Redirect to dashboard with error flag so user can see what happened
-      return NextResponse.redirect(`${origin}/dashboard?error=checkout_failed`);
+      return redirectWithCookies(`${origin}/dashboard?error=checkout_failed`);
     }
   }
 
