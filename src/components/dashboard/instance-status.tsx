@@ -15,7 +15,9 @@ import {
   Copy,
   Check,
   Power,
+  Settings,
 } from "lucide-react";
+import { SetupModal } from "./setup-modal";
 
 type InstanceData = {
   tenantStatus: string;
@@ -41,6 +43,7 @@ export function InstanceStatus() {
   const [loading, setLoading] = useState(true);
   const [restarting, setRestarting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [setupModalOpen, setSetupModalOpen] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -147,16 +150,27 @@ export function InstanceStatus() {
                 ? "Your instance is sleeping to save resources. It will wake automatically on the next request (30-60s cold start)."
                 : "Manage your AI assistant — configure models, channels, guardrails, and more."}
             </p>
-            <a
-              href={dashboardUrl || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button size="lg" className="gap-2 px-8 text-base">
-                <ExternalLink className="h-5 w-5" />
-                Open Assistant Dashboard
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <a
+                href={dashboardUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button size="lg" className="gap-2 px-8 text-base">
+                  <ExternalLink className="h-5 w-5" />
+                  Open Dashboard
+                </Button>
+              </a>
+              <Button
+                size="lg"
+                variant="outline"
+                className="gap-2 px-8 text-base"
+                onClick={() => setSetupModalOpen(true)}
+              >
+                <Settings className="h-5 w-5" />
+                Setup OpenClaw
               </Button>
-            </a>
+            </div>
             {isSleeping && (
               <p className="mt-3 text-xs text-muted-foreground">
                 Opening the dashboard will wake your instance. First load may take 30-60 seconds.
@@ -315,6 +329,13 @@ export function InstanceStatus() {
           </CardContent>
         </Card>
       )}
+
+      {/* Setup Modal */}
+      <SetupModal
+        open={setupModalOpen}
+        onOpenChange={setSetupModalOpen}
+        dashboardUrl={dashboardUrl || "#"}
+      />
     </div>
   );
 }
