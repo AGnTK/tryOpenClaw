@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,17 @@ const STATUS_BADGE: Record<string, { label: string; variant: "default" | "second
   failed: { label: "Failed", variant: "destructive" },
 };
 
+const PROGRESS_STEPS = [
+  { message: "Creating your cloud environment...", detail: "Setting up a dedicated server" },
+  { message: "Allocating network resources...", detail: "Configuring DNS and IP addresses" },
+  { message: "Preparing storage volume...", detail: "Creating persistent data store" },
+  { message: "Deploying your assistant...", detail: "Pulling and starting OpenClaw" },
+  { message: "Waiting for startup...", detail: "Your assistant is booting up" },
+  { message: "Almost there...", detail: "Running final health checks" },
+  { message: "Just a moment longer...", detail: "Verifying everything is ready" },
+  { message: "Finalizing setup...", detail: "Wrapping things up for you" },
+];
+
 export function InstanceStatus() {
   const [data, setData] = useState<InstanceData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,6 +57,8 @@ export function InstanceStatus() {
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [progressStep, setProgressStep] = useState(0);
+  const progressInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -105,6 +118,13 @@ export function InstanceStatus() {
   async function handleLaunch() {
     setLaunching(true);
     setLaunchError(null);
+    setProgressStep(0);
+
+    // Cycle through progress messages every 2.5 minutes
+    progressInterval.current = setInterval(() => {
+      setProgressStep((prev) => Math.min(prev + 1, PROGRESS_STEPS.length - 1));
+    }, 150000);
+
     try {
       const res = await fetch("/api/instance/provision", { method: "POST" });
       const body = await res.json();
@@ -120,6 +140,7 @@ export function InstanceStatus() {
     } catch {
       setLaunchError("Network error. Please try again.");
     } finally {
+      if (progressInterval.current) clearInterval(progressInterval.current);
       setLaunching(false);
     }
   }
@@ -145,6 +166,41 @@ export function InstanceStatus() {
   }
 
   if (data.tenantStatus === "paid") {
+    if (launching) {
+      const step = PROGRESS_STEPS[progressStep];
+      return (
+        <Card className="border-primary/20 bg-gradient-to-br from-background to-primary/5">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="mb-6 relative">
+              <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: "2s" }} />
+              <div className="relative rounded-full bg-primary/10 p-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            </div>
+            <h2 className="text-xl font-semibold transition-opacity duration-500">
+              {step.message}
+            </h2>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground transition-opacity duration-500">
+              {step.detail}
+            </p>
+            <div className="mt-6 flex gap-1.5">
+              {PROGRESS_STEPS.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 w-6 rounded-full transition-colors duration-500 ${
+                    i <= progressStep ? "bg-primary" : "bg-muted"
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              This usually takes 3-5 minutes. Please don&apos;t close this page.
+            </p>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card className="border-primary/20 bg-gradient-to-br from-background to-primary/5">
         <CardContent className="flex flex-col items-center justify-center py-16 text-center">
@@ -153,7 +209,7 @@ export function InstanceStatus() {
           </div>
           <h2 className="text-xl font-semibold">Payment Successful!</h2>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            Your account is ready. Click below to provision your OpenClaw instance on Fly.io. This usually takes 1-2 minutes.
+            Your account is ready. Click below to provision your OpenClaw instance on Fly.io. This usually takes 3-5 minutes.
           </p>
           {launchError && (
             <p className="mt-3 text-sm text-destructive">{launchError}</p>
@@ -162,14 +218,9 @@ export function InstanceStatus() {
             size="lg"
             className="mt-6 gap-2 px-8 text-base"
             onClick={handleLaunch}
-            disabled={launching}
           >
-            {launching ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <Rocket className="h-5 w-5" />
-            )}
-            {launching ? "Launching..." : "Launch Your OpenClaw"}
+            <Rocket className="h-5 w-5" />
+            Launch Your OpenClaw
           </Button>
         </CardContent>
       </Card>
@@ -178,15 +229,21 @@ export function InstanceStatus() {
 
   if (data.tenantStatus === "provisioning") {
     return (
-      <Card>
+      <Card className="border-primary/20 bg-gradient-to-br from-background to-primary/5">
         <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="mb-4 rounded-full bg-primary/10 p-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="mb-6 relative">
+            <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" style={{ animationDuration: "2s" }} />
+            <div className="relative rounded-full bg-primary/10 p-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
           </div>
           <h2 className="text-xl font-semibold">Setting Up Your Assistant</h2>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            Your OpenClaw instance is being provisioned on Fly.io. This usually takes 1-2 minutes.
+            Your OpenClaw instance is being provisioned. This usually takes 3-5 minutes.
             The page will update automatically.
+          </p>
+          <p className="mt-4 text-xs text-muted-foreground">
+            Please don&apos;t close this page.
           </p>
         </CardContent>
       </Card>

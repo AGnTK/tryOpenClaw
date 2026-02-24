@@ -37,7 +37,28 @@ export async function GET() {
       plan: tenant.plan,
       region: tenant.flyRegion,
     });
-  } catch {
+  } catch (err) {
+    // If Fly returns 404, the app/machine was deleted externally — reset tenant
+    const errMsg = err instanceof Error ? err.message : "";
+    if (errMsg.includes("404")) {
+      await db
+        .update(tenants)
+        .set({
+          status: "paid",
+          flyAppName: null,
+          flyMachineId: null,
+          instanceUrl: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(tenants.id, tenant.id));
+
+      return NextResponse.json({
+        tenantStatus: "paid",
+        machineState: null,
+        plan: tenant.plan,
+      });
+    }
+
     return NextResponse.json({
       tenantStatus: tenant.status,
       machineState: "unknown",
