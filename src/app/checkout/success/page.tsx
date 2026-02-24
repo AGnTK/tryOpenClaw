@@ -2,21 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, CheckCircle } from "lucide-react";
 
 export default function CheckoutSuccessPage() {
   const router = useRouter();
-  const [status, setStatus] = useState<"polling" | "ready" | "timeout">("polling");
+  const [status, setStatus] = useState<"polling" | "ready">("polling");
 
   useEffect(() => {
     let cancelled = false;
 
     async function poll() {
-      // Wait for Stripe webhook to create the tenant record
-      for (let i = 0; i < 30; i++) {
-        if (cancelled) return;
-
+      // Poll until Stripe webhook creates the tenant record
+      while (!cancelled) {
         try {
           const res = await fetch("/api/instance/status");
           if (res.ok) {
@@ -31,8 +29,6 @@ export default function CheckoutSuccessPage() {
 
         await new Promise((r) => setTimeout(r, 2000));
       }
-
-      if (!cancelled) setStatus("timeout");
     }
 
     poll();
@@ -51,13 +47,6 @@ export default function CheckoutSuccessPage() {
               <CardTitle>Payment Successful!</CardTitle>
               <CardDescription>Redirecting to your dashboard...</CardDescription>
             </>
-          ) : status === "timeout" ? (
-            <>
-              <CardTitle>Taking Longer Than Expected</CardTitle>
-              <CardDescription>
-                Your payment was received. Please go to your dashboard to launch your instance.
-              </CardDescription>
-            </>
           ) : (
             <>
               <div className="mx-auto mb-2">
@@ -70,16 +59,6 @@ export default function CheckoutSuccessPage() {
             </>
           )}
         </CardHeader>
-        {status === "timeout" && (
-          <CardContent>
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="text-sm text-primary underline"
-            >
-              Go to Dashboard
-            </button>
-          </CardContent>
-        )}
       </Card>
     </div>
   );
