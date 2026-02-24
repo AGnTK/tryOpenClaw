@@ -40,7 +40,7 @@ Any AI or developer working on this project must follow this workflow to avoid c
 | Database | Supabase PostgreSQL via Drizzle ORM |
 | Billing | Stripe (Checkout, Subscriptions, Customer Portal, Webhooks) |
 | Tenant Hosting | Fly.io Machines API (one machine per tenant) |
-| Deployment | Vercel (planned) |
+| Deployment | Vercel (GitHub integration, `aryav` branch = production) |
 | Package Manager | npm |
 
 ---

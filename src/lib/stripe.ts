@@ -9,9 +9,14 @@ function getStripe(): Stripe {
   return _stripe;
 }
 
-function getPriceId(): string {
-  const id = process.env.STRIPE_PRICE_STARTER;
-  if (!id) throw new Error("STRIPE_PRICE_STARTER not set");
+function getPriceId(plan: string): string {
+  const priceMap: Record<string, string | undefined> = {
+    starter: process.env.STRIPE_PRICE_STARTER,
+    pro: process.env.STRIPE_PRICE_PRO,
+    enterprise: process.env.STRIPE_PRICE_ENTERPRISE,
+  };
+  const id = priceMap[plan] || process.env.STRIPE_PRICE_PRO || process.env.STRIPE_PRICE_STARTER;
+  if (!id) throw new Error(`No price ID found for plan: ${plan}`);
   return id;
 }
 
@@ -23,7 +28,7 @@ export async function createCheckoutSession(
   const session = await getStripe().checkout.sessions.create({
     mode: "subscription",
     customer_email: customerEmail,
-    line_items: [{ price: getPriceId(), quantity: 1 }],
+    line_items: [{ price: getPriceId(plan), quantity: 1 }],
     success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success`,
     cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/cancel`,
     metadata: { userId, plan },

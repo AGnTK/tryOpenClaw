@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { plan = "starter" } = await request.json().catch(() => ({ plan: "starter" }));
+  const { plan = "pro" } = await request.json().catch(() => ({ plan: "pro" }));
 
   try {
     console.log("[checkout] Creating session for plan:", plan);

@@ -49,3 +49,4 @@ tryOpenClaw-notes.txt
 
 # claude code local settings
 .claude/settings.local.json
+.vercel

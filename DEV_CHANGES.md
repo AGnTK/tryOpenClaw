@@ -47,6 +47,19 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **Manual step**: Add `OPENCLAW_DEFAULT_OPENROUTER_KEY=sk-or-...` to `.env.local` (and Vercel env vars for production). Ensure OpenRouter account has credits
 - **Files changed**: `src/lib/fly.ts`, `src/app/api/instance/provision/route.ts`, `.env.example`
 
+### Vercel Deployment Setup
+- **Simplified `next.config.ts`**: Removed `turbopack.root: resolve(__dirname)` — turbopack is dev-only, `__dirname` may not resolve correctly in Vercel's build environment
+- **Production branch**: `aryav` (set in Vercel project settings)
+- **Manual steps required**:
+  1. `vercel link` — connect repo to Vercel project
+  2. Set `aryav` as production branch in Vercel dashboard (Settings → Git)
+  3. Add all env vars from `.env.local` to Vercel (Settings → Environment Variables)
+  4. Create production Stripe webhook endpoint pointing to Vercel URL
+  5. Set `STRIPE_WEBHOOK_SECRET` to the new production webhook's signing secret
+  6. Add Vercel URL to Supabase Auth redirect URLs
+  7. Set `NEXT_PUBLIC_APP_URL` to the Vercel production URL
+- **Files changed**: `next.config.ts`
+
 ### Landing Page Redesign
 - **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo)
 - **New file**: `src/components/landing/landing-page.tsx` — all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)
