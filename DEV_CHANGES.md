@@ -6,6 +6,16 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 
 ## Pending Changes
 
+### Fix: Instance Unreachable After Provisioning (Multiple Root Causes)
+- **Root cause 1**: Machines API does not allocate IPs — no `*.fly.dev` DNS record (NXDOMAIN)
+- **Root cause 2**: Volume mounted at `/root/.openclaw` but container runs as `node` user (`/home/node`) — permission denied → crash loop
+- **Root cause 3**: Missing `--bind lan` — gateway defaulted to loopback, unreachable from Fly proxy
+- **Root cause 4**: `sh -c` CMD wrapper — `docker-entrypoint.sh` expects `node` as argv[0]; passing `sh` skipped setup, gateway never started
+- **Root cause 5**: Insufficient memory — OpenClaw gateway needs ~800MB RSS at startup; 1024MB VM caused GC thrashing, gateway never bound to port
+- **Root cause 6**: OpenClaw requires `allowInsecureAuth: true` + token auth config for non-localhost connections — without `openclaw.json`, WebSocket rejects with "pairing required"
+- **Fix**: Added `allocateIpAddresses()` via Fly GraphQL API, fixed mount path to `/home/node/.openclaw`, switched CMD from `sh -c` to `node -e` wrapper (writes config then spawns gateway), bumped starter plan to 2048MB RAM with 1536MB heap limit, added `waitForMachineReady()` + `waitForServiceReady()` before marking active, auto-opens dashboard on success
+- **Files changed**: `src/lib/fly.ts`, `src/app/api/instance/provision/route.ts`, `src/components/dashboard/instance-status.tsx`
+
 ### Checkout Success/Cancel Page Redesign
 - **Both pages redesigned** to match landing page theme (Inter font, dot grid bg, red/teal accents, crab logo, rounded cards)
 - **Success page**: Polls for tenant record, shows spinner → auto-redirects to dashboard on confirmation

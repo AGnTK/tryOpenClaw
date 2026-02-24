@@ -85,10 +85,14 @@ export function InstanceStatus() {
     setLaunchError(null);
     try {
       const res = await fetch("/api/instance/provision", { method: "POST" });
+      const body = await res.json();
       if (!res.ok) {
-        const body = await res.json();
         setLaunchError(body.error || "Provisioning failed");
       } else {
+        const url = body.gatewayToken
+          ? `${body.instanceUrl}?token=${body.gatewayToken}`
+          : body.instanceUrl;
+        if (url) window.open(url, "_blank", "noopener,noreferrer");
         fetchStatus();
       }
     } catch {

@@ -3,7 +3,7 @@
 ## Planned Features
 
 ### Phase 2: Dashboard & Polish
-- [ ] Error handling for failed provisions (retry mechanism) — partially done (reverts to "paid" on failure)
+- [x] Error handling for failed provisions (retry mechanism) — reverts to "paid" on failure, waits for machine+service readiness before marking active
 - [ ] Health check worker (Vercel cron job to check machine status)
 - [ ] Email notifications (welcome, provisioning complete, payment failed)
 - [ ] Onboarding guide improvements (step-by-step with progress tracking)

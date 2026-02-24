@@ -3,7 +3,7 @@ import { getUser } from "@/lib/supabase-server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-import { createApp, createVolume, createMachine } from "@/lib/fly";
+import { createApp, allocateIpAddresses, createVolume, createMachine, waitForMachineReady, waitForServiceReady } from "@/lib/fly";
 import crypto from "crypto";
 
 export async function POST() {
@@ -46,11 +46,13 @@ export async function POST() {
   // Provision Fly.io instance
   try {
     await createApp(appName);
+    await allocateIpAddresses(appName);
     const volumeId = await createVolume(appName, region);
 
     const envVars: Record<string, string> = {
+      HOME: "/home/node",
+      NODE_OPTIONS: "--max-old-space-size=1536",
       OPENCLAW_GATEWAY_TOKEN: gatewayToken,
-      OPENCLAW_STATE_DIR: "/root/.openclaw",
     };
     if (process.env.OPENCLAW_DEFAULT_ANTHROPIC_KEY) {
       envVars.ANTHROPIC_API_KEY = process.env.OPENCLAW_DEFAULT_ANTHROPIC_KEY;
@@ -64,20 +66,38 @@ export async function POST() {
       tenant.plan,
       volumeId,
       envVars,
+      gatewayToken,
       region
     );
 
+    // Persist machine details immediately so they're never lost
     await db
       .update(tenants)
       .set({
         flyMachineId: machineId,
         instanceUrl,
-        status: "active",
         updatedAt: new Date(),
       })
       .where(eq(tenants.id, tenant.id));
 
-    return NextResponse.json({ status: "active", instanceUrl });
+    // Wait for the machine to reach "started" state
+    const machineReady = await waitForMachineReady(appName, machineId);
+    if (!machineReady) {
+      throw new Error("Machine failed to start within timeout");
+    }
+
+    // Wait for the HTTP service to accept connections
+    const serviceReady = await waitForServiceReady(instanceUrl);
+    if (!serviceReady) {
+      throw new Error("Service not reachable within timeout");
+    }
+
+    await db
+      .update(tenants)
+      .set({ status: "active", updatedAt: new Date() })
+      .where(eq(tenants.id, tenant.id));
+
+    return NextResponse.json({ status: "active", instanceUrl, gatewayToken });
   } catch (err) {
     console.error(`Provisioning failed for ${appName}:`, err);
     // Revert to paid so user can retry

@@ -1,4 +1,5 @@
 const FLY_API_URL = "https://api.machines.dev/v1";
+const FLY_GQL_URL = "https://api.fly.io/graphql";
 
 function flyHeaders() {
   return {
@@ -19,11 +20,28 @@ async function flyFetch(path: string, options: RequestInit = {}) {
   return res;
 }
 
+async function flyGql(query: string, variables: Record<string, unknown> = {}) {
+  const res = await fetch(FLY_GQL_URL, {
+    method: "POST",
+    headers: flyHeaders(),
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Fly GraphQL error ${res.status}: ${body}`);
+  }
+  const json = await res.json();
+  if (json.errors?.length) {
+    throw new Error(`Fly GraphQL error: ${json.errors[0].message}`);
+  }
+  return json.data;
+}
+
 // Plan → machine size mapping
 const PLAN_SIZES: Record<string, { cpus: number; memoryMb: number; cpuKind: string }> = {
-  starter: { cpus: 1, memoryMb: 512, cpuKind: "shared" },
-  pro: { cpus: 1, memoryMb: 1024, cpuKind: "shared" },
-  enterprise: { cpus: 2, memoryMb: 2048, cpuKind: "shared" },
+  starter: { cpus: 1, memoryMb: 2048, cpuKind: "shared" },
+  pro: { cpus: 2, memoryMb: 2048, cpuKind: "shared" },
+  enterprise: { cpus: 2, memoryMb: 4096, cpuKind: "shared" },
 };
 
 export async function createApp(appName: string): Promise<void> {
@@ -31,6 +49,19 @@ export async function createApp(appName: string): Promise<void> {
     method: "POST",
     body: JSON.stringify({ app_name: appName, org_slug: process.env.FLY_ORG || "personal" }),
   });
+}
+
+export async function allocateIpAddresses(appName: string): Promise<void> {
+  const mutation = `
+    mutation ($input: AllocateIPAddressInput!) {
+      allocateIpAddress(input: $input) {
+        ipAddress { address type }
+      }
+    }
+  `;
+  // Shared IPv4 + IPv6 — required for *.fly.dev DNS to resolve
+  await flyGql(mutation, { input: { appId: appName, type: "shared_v4" } });
+  await flyGql(mutation, { input: { appId: appName, type: "v6" } });
 }
 
 export async function createVolume(
@@ -54,10 +85,31 @@ export async function createMachine(
   plan: string,
   volumeId: string,
   envVars: Record<string, string>,
+  gatewayToken: string,
   region: string = "iad"
 ): Promise<{ machineId: string; instanceUrl: string }> {
   const size = PLAN_SIZES[plan] || PLAN_SIZES.starter;
   const openClawImage = process.env.OPENCLAW_DOCKER_IMAGE || "ghcr.io/openclaw/openclaw:latest";
+
+  // OpenClaw config: enable token auth + bypass device pairing for Fly.io proxy
+  // Passed as env var and written to file at boot (can't use Fly `files` — volume mount overwrites it)
+  const openclawConfig = JSON.stringify({
+    gateway: {
+      mode: "local",
+      bind: "lan",
+      port: 18789,
+      controlUi: {
+        enabled: true,
+        allowInsecureAuth: true,
+      },
+      auth: {
+        mode: "token",
+        token: gatewayToken,
+      },
+      trustedProxies: ["172.16.0.0/12", "10.0.0.0/8", "fdaa::/16", "fc00::/7"],
+    },
+  });
+  envVars.OPENCLAW_CONFIG_JSON = openclawConfig;
 
   const res = await flyFetch(`/apps/${appName}/machines`, {
     method: "POST",
@@ -65,6 +117,20 @@ export async function createMachine(
       region,
       config: {
         image: openClawImage,
+        init: {
+          cmd: [
+            "node", "-e",
+            // Write config from env var to volume-mounted dir, then spawn gateway.
+            // Uses "node -e" (not "sh -c") so docker-entrypoint.sh sees "node" as argv[0]
+            // and applies correct setup (workdir, user, etc.).
+            "const fs=require('fs');" +
+            "fs.mkdirSync('/home/node/.openclaw',{recursive:true});" +
+            "fs.writeFileSync('/home/node/.openclaw/openclaw.json',process.env.OPENCLAW_CONFIG_JSON||'{}');" +
+            "const c=require('child_process').spawn('node',['openclaw.mjs','gateway','--allow-unconfigured','--bind','lan','--port','18789'],{stdio:'inherit'});" +
+            "c.on('exit',x=>process.exit(x||0));" +
+            "process.on('SIGTERM',()=>c.kill('SIGTERM'))",
+          ],
+        },
         guest: {
           cpus: size.cpus,
           memory_mb: size.memoryMb,
@@ -87,7 +153,7 @@ export async function createMachine(
         mounts: [
           {
             volume: volumeId,
-            path: "/root/.openclaw",
+            path: "/home/node/.openclaw",
           },
         ],
         auto_destroy: false,
@@ -177,6 +243,25 @@ export async function waitForMachineReady(
       // Machine may not be queryable yet
     }
     await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+  return false;
+}
+
+export async function waitForServiceReady(
+  url: string,
+  timeoutMs: number = 180000
+): Promise<boolean> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      // Fly proxy returns 502/503 when the app isn't listening yet — keep waiting
+      // OpenClaw itself returns <500 (200, 302, 401, etc.) when ready
+      if (res.status < 500) return true;
+    } catch {
+      // Connection refused, timeout, DNS not ready — keep polling
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5000));
   }
   return false;
 }

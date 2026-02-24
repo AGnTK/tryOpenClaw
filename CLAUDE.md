@@ -140,11 +140,14 @@ public/
 3. Generate unique app name: `oc-{random-hex}`
 4. Generate `OPENCLAW_GATEWAY_TOKEN` (32-byte hex)
 5. Create Fly app via Machines API
-6. Create 1GB persistent volume (mounted at `/root/.openclaw`)
-7. Create machine with Docker image
-8. Store fly_app_name, fly_machine_id, instance_url, gateway_token in DB
-9. Update tenant status to `"active"`
-10. On failure: revert to `"paid"` so user can retry
+6. Allocate shared IPv4 + IPv6 via Fly GraphQL API (required for `*.fly.dev` DNS)
+7. Create 1GB persistent volume (mounted at `/home/node/.openclaw`)
+8. Create machine with Docker image (2048MB RAM, `node -e` CMD writes config + spawns gateway)
+9. Store fly_machine_id + instance_url in DB immediately (before wait steps)
+10. Wait for machine to reach `started` state + HTTP service to respond (`status < 500`)
+11. Update tenant status to `"active"`
+12. Return `gatewayToken` in response → client auto-opens instance in new tab
+13. On failure: revert to `"paid"` so user can retry
 
 ### Tenant Status Lifecycle
 | Status | Meaning |
@@ -158,9 +161,14 @@ public/
 ### OpenClaw Integration
 - **Docker image**: `ghcr.io/openclaw/openclaw:latest` (official GHCR image)
 - **Port**: 18789 (OpenClaw Gateway — serves web dashboard + WebSocket + API)
-- **Auth**: `OPENCLAW_GATEWAY_TOKEN` env var — dashboard accessed via `?token=<token>` URL param
-- **State**: Stored at `/root/.openclaw` on persistent Fly volume (config, sessions, memory)
-- **Config**: `openclaw.json` + env vars — users configure through built-in web dashboard
+- **Auth**: Token-based via `openclaw.json` config (`auth.mode: "token"`, `allowInsecureAuth: true`)
+- **Dashboard URL**: `{instanceUrl}?token={gatewayToken}` — token passed as URL param
+- **Bind mode**: `--bind lan` CLI flag (0.0.0.0) — required for Fly.io proxy to reach the gateway
+- **User**: Runs as `node` (not root) — `HOME=/home/node`
+- **Memory**: Gateway needs ~800MB RSS at startup; minimum 2048MB VM with `--max-old-space-size=1536`
+- **State**: Stored at `/home/node/.openclaw` on persistent Fly volume (config, sessions, memory)
+- **Config injection**: `OPENCLAW_CONFIG_JSON` env var → written to `openclaw.json` at boot via `node -e` wrapper
+- **CMD pattern**: Must use `node` as argv[0] (not `sh`) — `docker-entrypoint.sh` expects it for correct setup
 - **Channels**: 13+ supported (Telegram, Discord, Slack, WhatsApp, Signal, etc.)
 - **We don't touch OpenClaw internals** — all AI/channel/agent config is user-managed
 
@@ -196,4 +204,23 @@ See `.env.example` for all required variables. Key groups:
 
 ## Known Issues & Fixes
 
-_None yet._
+### Fly.io Machines API Does Not Allocate IPs
+The Machines REST API (`api.machines.dev`) does not allocate IP addresses. Without IPs, `*.fly.dev` DNS returns NXDOMAIN. Must call `allocateIpAddresses()` via the Fly GraphQL API (`api.fly.io/graphql`) after `createApp()`. Both shared IPv4 and IPv6 are allocated.
+
+### Machine Creation != Machine Ready
+`createMachine()` returns as soon as Fly acknowledges the request. The machine still needs to pull the Docker image, boot, and start OpenClaw. Always call `waitForMachineReady()` + `waitForServiceReady()` before marking a tenant as `active`.
+
+### OpenClaw Container Runs as `node` User (Not Root)
+The OpenClaw Docker image runs as uid 1000 (`node`). Volume must mount at `/home/node/.openclaw`, not `/root/.openclaw`. Set `HOME=/home/node` and `--bind lan` so Fly's proxy can reach port 18789.
+
+### CMD Must Start With `node` (Not `sh`)
+The OpenClaw `docker-entrypoint.sh` expects `node` as the first CMD argument. Using `sh -c "..."` as CMD causes the entrypoint to skip setup (workdir, user context, etc.), resulting in the gateway silently failing to start with no logs. Use `node -e "..."` instead when a wrapper script is needed.
+
+### OpenClaw Gateway Requires ~800MB RSS
+The gateway needs significant memory at startup. With 1024MB VM + 768MB heap, the gateway GC-thrashes and never binds to port 18789. Minimum: 2048MB VM + 1536MB Node.js heap (`NODE_OPTIONS=--max-old-space-size=1536`).
+
+### Config File vs Volume Mount Conflict
+Fly's `files` config writes files before volume mounts. If the file path is inside the volume mount point, the volume mount overwrites it. Solution: pass config as env var (`OPENCLAW_CONFIG_JSON`) and write it to disk at boot via `node -e` wrapper (after volume is mounted).
+
+### OpenClaw Requires `allowInsecureAuth` for Non-Localhost
+Without `allowInsecureAuth: true` in `openclaw.json`, non-localhost WebSocket connections get rejected with "pairing required" (1008). The config must also set `auth.mode: "token"` and include `trustedProxies` for Fly's internal networks.
