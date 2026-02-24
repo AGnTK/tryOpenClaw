@@ -234,3 +234,18 @@ Without `allowInsecureAuth: true` in `openclaw.json`, non-localhost WebSocket co
 
 ### Fly `autostart` Conflicts With Manual Stop
 Fly services with `autostart: true` auto-start the machine on any incoming HTTP request. Manual stop via API appears to do nothing because the next request (dashboard polling, browser tab) triggers autostart. Fix: `stopMachine()` disables `autostart` in the machine's service config before stopping; `startMachine()` re-enables it.
+
+### Redirect Loop When Stripe Checkout Fails (New Users)
+When `createCheckoutSession` throws (e.g., wrong price ID, bad API key), the auth callback and dashboard layout previously redirected to `/` or `/dashboard` with error params. Since the root page unconditionally redirects authed users to `/dashboard`, and the dashboard layout redirects users without tenants back, this created an infinite redirect loop (ERR_TOO_MANY_REDIRECTS). Fix: All checkout failure fallbacks now redirect to `/checkout/cancel` (which has retry + sign out buttons and no server-side redirects). The root page also skips the `/dashboard` redirect when an `?error` query param is present.
+
+### Vercel Env Vars Can Have Trailing Newlines
+When pasting env var values in the Vercel Dashboard, trailing `\n` characters can be included invisibly. This corrupts API keys and IDs — Stripe returns "connection error" for bad keys, "No such price" for bad price IDs. Fix: `src/lib/stripe.ts` now `.trim()`s all env var values via a helper function. **Always trim env vars at the point of use when calling external APIs.**
+
+### Stripe Test vs Live Mode Mismatch
+Stripe price IDs are mode-specific. A price ID from live mode (`price_...`) will NOT work with a test secret key (`sk_test_...`), and vice versa. Error: "No such price: '...'; a similar object exists in live mode, but a test mode key was used". Both `STRIPE_SECRET_KEY` and `STRIPE_PRICE_*` must be from the same Stripe mode.
+
+### Stripe Webhook Secret: Local vs Production
+`stripe listen` generates a temporary webhook signing secret that only works locally. For production (Vercel), you must create a webhook endpoint in the Stripe Dashboard (Developers → Webhooks) pointing to `{PRODUCTION_URL}/api/webhooks/stripe` and use THAT endpoint's signing secret as `STRIPE_WEBHOOK_SECRET`.
+
+### Vercel Deploys: Push to Branch ≠ Production Deploy
+Pushing to `aryav` creates a **Preview** deployment on Vercel, not Production. The production domain (`tryopenclaw.vercel.app`) only updates from Production deploys. Use `vercel --prod` to force a production deployment, or configure the branch as the production branch in Vercel Dashboard → Settings → Git.

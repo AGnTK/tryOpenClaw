@@ -26,6 +26,8 @@
 - [ ] Consider adding Sentry or similar for error tracking
 - [ ] Landing page uses inline CSS — consider migrating to Tailwind for consistency
 - [ ] Checkout success/cancel pages use inline styles — consider extracting shared theme
+- [ ] Add `.trim()` to env var usage in `fly.ts` and other libs (currently only `stripe.ts` trims)
+- [ ] `src/proxy.ts` is dead code — not imported anywhere, not used as middleware. Remove or wire up as actual Next.js middleware
 
 ## Blockers
 

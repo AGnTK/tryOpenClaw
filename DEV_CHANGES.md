@@ -60,6 +60,21 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
   7. Set `NEXT_PUBLIC_APP_URL` to the Vercel production URL
 - **Files changed**: `next.config.ts`
 
+### Fix: Redirect Loop for New Users (Stripe Checkout Failure)
+- **Problem**: New users signing in via Google OAuth hit ERR_TOO_MANY_REDIRECTS instead of seeing Stripe checkout
+- **Root cause 1**: `STRIPE_PRICE_PRO` was a live-mode price ID but `STRIPE_SECRET_KEY` was a test-mode key — Stripe API rejected every checkout session creation
+- **Root cause 2**: When `createCheckoutSession` threw, callback redirected to `/dashboard?error=...` → dashboard layout (no tenant) redirected to `/?error=...` → root page (authed user) redirected back to `/dashboard` → infinite loop
+- **Root cause 3**: Vercel env vars had trailing `\n` characters (pasted with newlines in dashboard) — corrupted Stripe API key causing "connection error"
+- **Fix (code)**:
+  - `src/app/page.tsx`: Skip `/dashboard` redirect when `?error` param is present (breaks redirect loop)
+  - `src/app/auth/callback/route.ts`: Checkout failure fallback → `/checkout/cancel` instead of `/dashboard`
+  - `src/app/dashboard/layout.tsx`: Checkout failure fallback → `/checkout/cancel` instead of `/`
+  - `src/lib/stripe.ts`: Added `env()` helper that `.trim()`s all env var values — prevents trailing whitespace/newline issues
+- **Fix (env vars)**: Updated `STRIPE_PRICE_PRO` to test-mode price ID, re-set all env vars via `printf` (no trailing newline) using `vercel env rm` + `vercel env add`
+- **Fix (webhook)**: Created production webhook endpoint in Stripe Dashboard, updated `STRIPE_WEBHOOK_SECRET` on Vercel
+- **Deploy**: Used `vercel --prod` (git push alone only creates Preview deploys)
+- **Files changed**: `src/app/page.tsx`, `src/app/auth/callback/route.ts`, `src/app/dashboard/layout.tsx`, `src/lib/stripe.ts`
+
 ### Landing Page Redesign
 - **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo)
 - **New file**: `src/components/landing/landing-page.tsx` — all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)
