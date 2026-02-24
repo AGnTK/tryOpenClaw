@@ -69,32 +69,36 @@ flyctl machines list -a oc-tenant-x  # Check tenant machine
 ```
 src/
 ├── app/
-│   ├── layout.tsx               # Root layout, fonts, metadata
-│   ├── page.tsx                 # Root redirect (→ /dashboard or /auth/login)
+│   ├── layout.tsx               # Root layout, fonts (Geist + Inter + JetBrains Mono), metadata
+│   ├── page.tsx                 # Landing page (unauthed) or redirect to /dashboard (authed)
 │   ├── auth/
-│   │   ├── login/page.tsx       # Google sign-in page (Supabase Auth)
 │   │   ├── callback/route.ts    # OAuth callback handler
-│   │   └── logout/route.ts      # Sign out
+│   │   └── logout/route.ts      # Sign out → redirects to /
+│   ├── checkout/
+│   │   ├── success/page.tsx     # Post-payment confirmation → polls then redirects to dashboard
+│   │   └── cancel/page.tsx      # Payment cancelled → retry or sign out
 │   ├── dashboard/
-│   │   ├── layout.tsx           # Dashboard shell (sidebar + header)
-│   │   ├── page.tsx             # Instance status + quick start guide
+│   │   ├── layout.tsx           # Dashboard shell (sidebar + header), requires paid tenant
+│   │   ├── page.tsx             # Instance status + Launch button + quick start guide
 │   │   ├── billing/page.tsx     # Stripe portal + plan comparison
 │   │   └── settings/page.tsx    # Account settings + danger zone
 │   └── api/
-│       ├── webhooks/stripe/route.ts     # Stripe webhook (provision/suspend)
+│       ├── webhooks/stripe/route.ts     # Stripe webhook (creates tenant, handles cancellation)
 │       ├── instance/
-│       │   ├── provision/route.ts       # Get tenant instance info
-│       │   ├── status/route.ts          # Live machine status from Fly
-│       │   ├── restart/route.ts         # Restart Fly machine
-│       │   └── destroy/route.ts         # Destroy machine (cancelled only)
+│       │   ├── provision/route.ts       # POST: User-triggered Fly.io provisioning
+│       │   ├── status/route.ts          # GET: Live machine status from Fly
+│       │   ├── restart/route.ts         # POST: Restart Fly machine
+│       │   └── destroy/route.ts         # POST: Destroy machine (cancelled only)
 │       └── billing/
 │           ├── checkout/route.ts        # Create Stripe Checkout session
 │           └── portal/route.ts          # Create Stripe Portal session
 ├── components/
+│   ├── landing/
+│   │   └── landing-page.tsx     # Full marketing landing page (ported from AGnTK/website)
 │   ├── dashboard/
 │   │   ├── sidebar.tsx          # Nav sidebar
 │   │   ├── header.tsx           # Top bar with email + logout
-│   │   └── instance-status.tsx  # Instance status card + plan selector
+│   │   └── instance-status.tsx  # Instance status card + Launch button + plan selector
 │   └── ui/                      # shadcn/ui components (button, card, badge, input)
 ├── lib/
 │   ├── db.ts                    # Drizzle client
@@ -104,7 +108,11 @@ src/
 │   ├── supabase-server.ts       # Supabase server client
 │   ├── supabase-client.ts       # Supabase browser client
 │   └── utils.ts                 # cn() utility
-└── proxy.ts                    # Auth proxy (Next.js 16 convention, protects /dashboard/*)
+├── proxy.ts                     # Auth proxy (protects /dashboard/*, /checkout/*)
+public/
+├── logos/                       # Company + model + platform logos (SVG/WebP)
+├── profiles/                    # Testimonial avatar images (WebP)
+└── favicon.svg                  # Crab favicon
 ```
 
 ---
@@ -112,26 +120,40 @@ src/
 ## Architecture & Key Patterns
 
 ### Auth Flow
-1. Root `/` redirects to `/dashboard` (authed) or `/auth/login` (unauthed)
-2. Middleware protects all `/dashboard/*` routes
-3. Google OAuth via Supabase Auth → callback exchanges code for session
-4. Session stored in cookies via `@supabase/ssr`
+1. Root `/` shows landing page (unauthed) or redirects to `/dashboard` (authed)
+2. "Get Started" buttons trigger Google OAuth via Supabase `signInWithOAuth`
+3. Middleware (`proxy.ts`) protects `/dashboard/*` and `/checkout/*` routes
+4. OAuth callback exchanges code for session, checks for existing tenant
+5. Session stored in cookies via `@supabase/ssr`
+6. **No `/auth/login` page** — all auth flows go through landing page at `/`
 
 ### Billing Flow
-1. New user → `/auth/login` → Google sign-in → `/dashboard`
-2. Dashboard shows plan selector → POST `/api/billing/checkout` → Stripe Checkout
-3. Payment succeeds → Stripe webhook `checkout.session.completed` → provision Fly machine
-4. Cancellation → Stripe webhook → stop machine → mark cancelled
+1. New user → Landing page → "Get Started" → Google OAuth
+2. OAuth callback → no tenant found → redirect to Stripe Checkout
+3. Payment succeeds → Stripe webhook `checkout.session.completed` → creates tenant with status `"paid"`
+4. User redirected to `/checkout/success` → polls for tenant → auto-redirects to `/dashboard`
+5. Cancellation → Stripe webhook → stop machine → mark cancelled
 
-### Provisioning Flow (in Stripe webhook handler)
-1. Generate unique app name: `oc-{random-hex}`
-2. Generate `OPENCLAW_GATEWAY_TOKEN` (32-byte hex) per tenant for OpenClaw dashboard auth
-3. Create Fly app via Machines API
-4. Create 1GB persistent volume (mounted at `/root/.openclaw` — OpenClaw state dir)
-5. Create machine with `ghcr.io/openclaw/openclaw:latest` Docker image
-6. Pass env vars: `OPENCLAW_GATEWAY_TOKEN`, `OPENCLAW_STATE_DIR`, optional AI API keys
-7. Store fly_app_name, fly_machine_id, instance_url, gateway_token in DB
-8. Update tenant status to 'active'
+### Provisioning Flow (User-Triggered from Dashboard)
+1. User sees "Launch Your OpenClaw" button on dashboard (status: `"paid"`)
+2. Click → `POST /api/instance/provision`
+3. Generate unique app name: `oc-{random-hex}`
+4. Generate `OPENCLAW_GATEWAY_TOKEN` (32-byte hex)
+5. Create Fly app via Machines API
+6. Create 1GB persistent volume (mounted at `/root/.openclaw`)
+7. Create machine with Docker image
+8. Store fly_app_name, fly_machine_id, instance_url, gateway_token in DB
+9. Update tenant status to `"active"`
+10. On failure: revert to `"paid"` so user can retry
+
+### Tenant Status Lifecycle
+| Status | Meaning |
+|--------|---------|
+| `paid` | Payment confirmed, instance not yet launched |
+| `provisioning` | Fly.io instance being created |
+| `active` | Instance running |
+| `suspended` | Payment failed |
+| `cancelled` | Subscription cancelled |
 
 ### OpenClaw Integration
 - **Docker image**: `ghcr.io/openclaw/openclaw:latest` (official GHCR image)
@@ -153,6 +175,9 @@ src/
 - Fly.io API token stored in `FLY_API_TOKEN` env var
 - Stripe webhook uses raw body + signature verification
 - Tenant app names follow pattern: `oc-{12-char-hex}`
+- Landing page uses inline CSS (scoped under `.landing-page`) — not Tailwind
+- Checkout success/cancel pages use inline styles matching landing page theme
+- All auth redirects point to `/` (not `/auth/login` — that page was removed)
 
 ---
 

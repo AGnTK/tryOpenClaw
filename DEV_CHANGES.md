@@ -1,39 +1,32 @@
 # DEV_CHANGES.md
 
-Changes in `dev` since last merge to `master`. Clear after each merge (keep template).
+Changes on `aryav` branch since last merge to `main`. Clear after each merge (keep template).
 
 ---
 
 ## Pending Changes
 
+### Checkout Success/Cancel Page Redesign
+- **Both pages redesigned** to match landing page theme (Inter font, dot grid bg, red/teal accents, crab logo, rounded cards)
+- **Success page**: Polls for tenant record, shows spinner → auto-redirects to dashboard on confirmation
+- **Cancel page**: Red "Try Again" button (retries Stripe Checkout) + "Sign Out" link
+
 ### Post-Payment Flow: Manual Instance Launch
 - **Stripe webhook no longer auto-provisions** — `checkout.session.completed` now sets tenant status to `"paid"` (no Fly.io calls)
 - **New provisioning API**: `POST /api/instance/provision` — user-triggered, creates Fly app/volume/machine, reverts to `"paid"` on failure so user can retry
 - **Dashboard "Launch Your OpenClaw" button** — shown when tenant status is `"paid"`, triggers provisioning on click
-- **Checkout success page simplified** — polls for tenant record then redirects to dashboard (no provisioning wait)
-- **Flow**: Payment → Dashboard → "Launch Your OpenClaw" → Provisioning → Active
+- **Checkout success page** — polls for tenant record then redirects to dashboard
+- **New tenant status**: `"paid"` — between payment and instance launch
+- **Flow**: Payment → Confirmation → Dashboard → "Launch Your OpenClaw" → Provisioning → Active
 
 ### Landing Page Redesign
-- **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo) instead of being redirected to `/auth/login`
-- **New file**: `src/components/landing/landing-page.tsx` — full landing page component with all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)
-- **Static assets**: Added `/public/logos/` (6 company logos + 3 model logos + 3 platform logos) and `/public/profiles/` (13 testimonial avatars)
-- **Google Fonts**: Added Inter + JetBrains Mono via `<link>` in `src/app/layout.tsx`
+- **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo)
+- **New file**: `src/components/landing/landing-page.tsx` — all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)
+- **Static assets**: Added `/public/logos/` and `/public/profiles/`
+- **Google Fonts**: Added Inter + JetBrains Mono via `<link>` in layout
 - **All "Get Started" buttons** trigger Google OAuth via `signInWithOAuth({ provider: "google" })`
-- **`/auth/login` page unchanged** — still works as fallback for middleware redirects
-
-### Phase 1: Core Platform (Initial Build)
-- **Next.js 15 project scaffolded** with TypeScript strict, Tailwind v4, App Router
-- **shadcn/ui components**: Button, Card, Badge, Input (manual setup, no CLI)
-- **Drizzle ORM schema**: `tenants` + `billing_events` tables (`src/lib/schema.ts`)
-- **Supabase Auth**: Google OAuth login, callback, logout, middleware protection
-- **Fly.io Machines API client** (`src/lib/fly.ts`): create/start/stop/destroy/resize machines
-- **Stripe integration** (`src/lib/stripe.ts`): Checkout sessions, Portal sessions, webhook verification
-- **Stripe webhook handler** (`src/app/api/webhooks/stripe/route.ts`): Handles checkout.session.completed, subscription.deleted, subscription.updated, invoice.payment_failed
-- **Instance API routes**: provision info, live status, restart, destroy
-- **Billing API routes**: create Checkout session, create Portal session
-- **Dashboard**: Layout (sidebar + header), instance status with auto-refresh, quick start guide
-- **Billing page**: Stripe Portal link, plan comparison cards
-- **Settings page**: Instance config guidance, danger zone (cancel subscription)
+- **Removed `/auth/login` page** — all auth redirects now go to `/`
+- **Updated all references**: proxy.ts, header.tsx, logout route, dashboard layout, callback route
 
 ---
 
@@ -58,3 +51,4 @@ Changes in `dev` since last merge to `master`. Clear after each merge (keep temp
 - First deployment requires all env vars set in Vercel dashboard
 - Stripe webhook URL must point to production URL after deploy
 - Fly.io API token must have org-level access to create apps
+- Existing tenants with status `"provisioning"` may need manual status update to `"paid"` if migrating

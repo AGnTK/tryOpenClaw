@@ -3,11 +3,12 @@
 ## Planned Features
 
 ### Phase 2: Dashboard & Polish
-- [ ] Error handling for failed provisions (retry mechanism)
+- [ ] Error handling for failed provisions (retry mechanism) — partially done (reverts to "paid" on failure)
 - [ ] Health check worker (Vercel cron job to check machine status)
 - [ ] Email notifications (welcome, provisioning complete, payment failed)
 - [ ] Onboarding guide improvements (step-by-step with progress tracking)
 - [ ] Instance log viewer (link to Fly.io log viewer)
+- [ ] Dashboard redesign to match landing page visual theme
 
 ### Phase 3: Growth
 - [ ] Custom domains (tenant maps their domain to Fly instance)
@@ -23,8 +24,9 @@
 - [ ] Add rate limiting to API routes
 - [ ] Add proper error boundary components
 - [ ] Consider adding Sentry or similar for error tracking
-- [ ] Stripe webhook retry handling for failed provisioning
+- [ ] Landing page uses inline CSS — consider migrating to Tailwind for consistency
+- [ ] Checkout success/cancel pages use inline styles — consider extracting shared theme
 
 ## Blockers
 
-_None yet._
+_None._
