@@ -34,7 +34,7 @@ export default async function DashboardLayout({
     if (checkoutUrl) {
       redirect(checkoutUrl);
     } else {
-      redirect("/?error=checkout_failed");
+      redirect("/checkout/cancel?error=checkout_failed");
     }
   }
 

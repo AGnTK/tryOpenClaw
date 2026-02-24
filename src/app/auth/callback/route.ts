@@ -59,15 +59,15 @@ export async function GET(request: NextRequest) {
       console.log("[callback] Creating checkout for user:", user.id, user.email);
       const checkoutUrl = await createCheckoutSession(
         user.email!,
-        "starter",
+        "pro",
         user.id
       );
       console.log("[callback] Stripe checkout URL:", checkoutUrl);
       return NextResponse.redirect(checkoutUrl);
     } catch (err) {
       console.error("[callback] Stripe checkout failed:", err);
-      // Redirect to dashboard with error flag so user can see what happened
-      return NextResponse.redirect(`${origin}/dashboard?error=checkout_failed`);
+      // Redirect to cancel page — has retry + sign out options
+      return NextResponse.redirect(`${origin}/checkout/cancel?error=checkout_failed`);
     }
   }
 
