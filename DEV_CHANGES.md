@@ -6,6 +6,14 @@ Changes in `dev` since last merge to `master`. Clear after each merge (keep temp
 
 ## Pending Changes
 
+### Landing Page Redesign
+- **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo) instead of being redirected to `/auth/login`
+- **New file**: `src/components/landing/landing-page.tsx` — full landing page component with all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)
+- **Static assets**: Added `/public/logos/` (6 company logos + 3 model logos + 3 platform logos) and `/public/profiles/` (13 testimonial avatars)
+- **Google Fonts**: Added Inter + JetBrains Mono via `<link>` in `src/app/layout.tsx`
+- **All "Get Started" buttons** trigger Google OAuth via `signInWithOAuth({ provider: "google" })`
+- **`/auth/login` page unchanged** — still works as fallback for middleware redirects
+
 ### Phase 1: Core Platform (Initial Build)
 - **Next.js 15 project scaffolded** with TypeScript strict, Tailwind v4, App Router
 - **shadcn/ui components**: Button, Card, Badge, Input (manual setup, no CLI)

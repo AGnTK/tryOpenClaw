@@ -15,7 +15,7 @@ export default async function DashboardLayout({
   const user = await getUser();
 
   if (!user) {
-    redirect("/auth/login");
+    redirect("/");
   }
 
   // Require active subscription to access dashboard
@@ -34,7 +34,7 @@ export default async function DashboardLayout({
     if (checkoutUrl) {
       redirect(checkoutUrl);
     } else {
-      redirect("/auth/login?error=checkout_failed");
+      redirect("/?error=checkout_failed");
     }
   }
 

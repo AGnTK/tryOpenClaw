@@ -1,0 +1,16 @@
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ff4d4d"/>
+            <stop offset="100%" style="stop-color:#991b1b"/>
+        </linearGradient>
+    </defs>
+    <ellipse cx="50" cy="55" rx="35" ry="28" fill="url(#logoGradient)"/>
+    <ellipse cx="50" cy="45" rx="25" ry="18" fill="url(#logoGradient)"/>
+    <circle cx="38" cy="42" r="4" fill="#ffffff"/>
+    <circle cx="62" cy="42" r="4" fill="#ffffff"/>
+    <path d="M25 55 Q15 45 10 55 Q5 65 15 60 Q20 58 25 55" fill="url(#logoGradient)"/>
+    <path d="M75 55 Q85 45 90 55 Q95 65 85 60 Q80 58 75 55" fill="url(#logoGradient)"/>
+    <path d="M30 35 Q25 25 20 30 Q15 35 25 38" fill="url(#logoGradient)"/>
+    <path d="M70 35 Q75 25 80 30 Q85 35 75 38" fill="url(#logoGradient)"/>
+</svg>

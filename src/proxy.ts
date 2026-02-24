@@ -34,12 +34,12 @@ export async function proxy(request: NextRequest) {
   // Protect dashboard and checkout routes
   if ((pathname.startsWith("/dashboard") || pathname.startsWith("/checkout")) && !user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
+    url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
   // Redirect logged-in users away from login page
-  if (pathname === "/auth/login" && user) {
+  if (pathname === "/" && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
@@ -49,5 +49,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard", "/dashboard/:path*", "/checkout/:path*", "/auth/login"],
+  matcher: ["/dashboard", "/dashboard/:path*", "/checkout/:path*", "/"],
 };

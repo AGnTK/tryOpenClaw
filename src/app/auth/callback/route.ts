@@ -36,12 +36,12 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       console.error("OAuth code exchange failed:", error.message);
-      return NextResponse.redirect(`${origin}/auth/login?error=auth_failed`);
+      return NextResponse.redirect(`${origin}/?error=auth_failed`);
     }
 
     const user = data.user;
     if (!user) {
-      return NextResponse.redirect(`${origin}/auth/login?error=no_user`);
+      return NextResponse.redirect(`${origin}/?error=no_user`);
     }
 
     // Check if user already has a paid tenant
@@ -72,5 +72,5 @@ export async function GET(request: NextRequest) {
   }
 
   // No code — redirect back to login
-  return NextResponse.redirect(`${origin}/auth/login?error=no_code`);
+  return NextResponse.redirect(`${origin}/?error=no_code`);
 }

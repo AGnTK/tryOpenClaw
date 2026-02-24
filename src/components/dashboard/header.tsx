@@ -6,7 +6,7 @@ import { LogOut } from "lucide-react";
 export function DashboardHeader({ email }: { email: string }) {
   async function handleLogout() {
     await fetch("/auth/logout", { method: "POST" });
-    window.location.href = "/auth/login";
+    window.location.href = "/";
   }
 
   return (
