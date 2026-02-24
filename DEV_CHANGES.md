@@ -36,6 +36,17 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **New tenant status**: `"paid"` — between payment and instance launch
 - **Flow**: Payment → Confirmation → Dashboard → "Launch Your OpenClaw" → Provisioning → Active
 
+### Pre-configure Kimi K2.5 as Default Model via OpenRouter
+- **Problem**: New users who launch an OpenClaw instance land on an unconfigured assistant — must manually add API keys and select a model before chatting
+- **Initial attempt (failed)**: Tried passing `OPENCLAW_PRIMARY_MODEL` / `OPENCLAW_DEFAULT_MODEL` as env vars to the Fly machine. OpenClaw ignores both — they are not valid env vars. Gateway defaulted to `anthropic/claude-opus-4-6` and failed with "No API key found for provider anthropic"
+- **Root cause**: OpenClaw reads model config from `openclaw.json` (`agents.defaults.model.primary`), not from env vars. API keys (`OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, etc.) *are* read from env vars
+- **Fix**: Added `agents.defaults.model` section to the `openclaw.json` config built in `fly.ts`. `OPENROUTER_API_KEY` passed as env var to the Fly machine. Kimi K2.5 (`openrouter/moonshotai/kimi-k2.5`) is pre-configured as default so users can chat immediately
+- **Confirmed working**: Gateway logs show `agent model: openrouter/moonshotai/kimi-k2.5`
+- **Users can still** add their own API keys for premium models (Claude, Gemini) via the OpenClaw dashboard
+- **New env vars**: `OPENCLAW_DEFAULT_OPENROUTER_KEY` (our env var, passed as `OPENROUTER_API_KEY` to machine), `OPENCLAW_DEFAULT_MODEL` (our env var, used to build `openclaw.json` config — defaults to `openrouter/moonshotai/kimi-k2.5`)
+- **Manual step**: Add `OPENCLAW_DEFAULT_OPENROUTER_KEY=sk-or-...` to `.env.local` (and Vercel env vars for production). Ensure OpenRouter account has credits
+- **Files changed**: `src/lib/fly.ts`, `src/app/api/instance/provision/route.ts`, `.env.example`
+
 ### Landing Page Redesign
 - **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo)
 - **New file**: `src/components/landing/landing-page.tsx` — all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)

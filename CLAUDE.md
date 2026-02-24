@@ -172,7 +172,8 @@ public/
 - **Config injection**: `OPENCLAW_CONFIG_JSON` env var → written to `openclaw.json` at boot via `node -e` wrapper
 - **CMD pattern**: Must use `node` as argv[0] (not `sh`) — `docker-entrypoint.sh` expects it for correct setup
 - **Channels**: 13+ supported (Telegram, Discord, Slack, WhatsApp, Signal, etc.)
-- **We don't touch OpenClaw internals** — all AI/channel/agent config is user-managed
+- **Default model**: Kimi K2.5 via OpenRouter (`openrouter/moonshotai/kimi-k2.5`) — set via `agents.defaults.model` in `openclaw.json`, not via env var (OpenClaw ignores model env vars)
+- **We don't touch OpenClaw internals** — all AI/channel/agent config is user-managed (users can add their own API keys for premium models via the OpenClaw dashboard)
 
 ### Database
 - **tenants**: One row per paying customer. Stores Supabase user ID, Stripe IDs, Fly.io IDs, plan, status, gateway_token.
@@ -199,7 +200,8 @@ See `.env.example` for all required variables. Key groups:
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*` — Stripe
 - `FLY_API_TOKEN`, `FLY_ORG` — Fly.io
 - `OPENCLAW_DOCKER_IMAGE` — Docker image (default: `ghcr.io/openclaw/openclaw:latest`)
-- `OPENCLAW_DEFAULT_ANTHROPIC_KEY`, `OPENCLAW_DEFAULT_OPENAI_KEY` — Optional pre-configured AI keys for tenant instances
+- `OPENCLAW_DEFAULT_ANTHROPIC_KEY`, `OPENCLAW_DEFAULT_OPENAI_KEY`, `OPENCLAW_DEFAULT_OPENROUTER_KEY` — Optional pre-configured AI keys for tenant instances
+- `OPENCLAW_DEFAULT_MODEL` — Default model for new instances, set in `openclaw.json` `agents.defaults.model` (default: `openrouter/moonshotai/kimi-k2.5`)
 - `NEXT_PUBLIC_APP_URL` — Base URL for redirects
 
 ---
@@ -226,6 +228,9 @@ Fly's `files` config writes files before volume mounts. If the file path is insi
 
 ### OpenClaw Requires `allowInsecureAuth` for Non-Localhost
 Without `allowInsecureAuth: true` in `openclaw.json`, non-localhost WebSocket connections get rejected with "pairing required" (1008). The config must also set `auth.mode: "token"` and include `trustedProxies` for Fly's internal networks.
+
+### OpenClaw Model Config Must Be in `openclaw.json`, Not Env Vars
+`OPENCLAW_DEFAULT_MODEL` and `OPENCLAW_PRIMARY_MODEL` are not valid OpenClaw env vars. The default model must be set in `openclaw.json` under `agents.defaults.model.primary`. API keys (`OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, etc.) *are* read from env vars.
 
 ### Fly `autostart` Conflicts With Manual Stop
 Fly services with `autostart: true` auto-start the machine on any incoming HTTP request. Manual stop via API appears to do nothing because the next request (dashboard polling, browser tab) triggers autostart. Fix: `stopMachine()` disables `autostart` in the machine's service config before stopping; `startMachine()` re-enables it.

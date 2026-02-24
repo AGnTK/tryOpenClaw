@@ -60,6 +60,10 @@ export async function POST() {
     if (process.env.OPENCLAW_DEFAULT_OPENAI_KEY) {
       envVars.OPENAI_API_KEY = process.env.OPENCLAW_DEFAULT_OPENAI_KEY;
     }
+    if (process.env.OPENCLAW_DEFAULT_OPENROUTER_KEY) {
+      envVars.OPENROUTER_API_KEY = process.env.OPENCLAW_DEFAULT_OPENROUTER_KEY;
+    }
+    // Default model is configured in openclaw.json (agents.defaults.model), not env vars
 
     const { machineId, instanceUrl } = await createMachine(
       appName,
