@@ -90,7 +90,7 @@ export default function LandingPage() {
               OpenClaw
             </a>
             <div className="nav-links nav-links-desktop">
-              <a href="mailto:support@openclaw.new">Contact Support</a>
+              <a href="mailto:support@tryopenclawai.com">Contact Support</a>
               <button onClick={signInWithGoogle} className="btn btn-primary">Get Started</button>
             </div>
             <button
@@ -112,7 +112,7 @@ export default function LandingPage() {
           {/* Mobile dropdown menu */}
           {mobileMenuOpen && (
             <div className="mobile-menu">
-              <a href="mailto:support@openclaw.new" onClick={() => setMobileMenuOpen(false)}>Contact Support</a>
+              <a href="mailto:support@tryopenclawai.com" onClick={() => setMobileMenuOpen(false)}>Contact Support</a>
               <button onClick={() => { setMobileMenuOpen(false); signInWithGoogle(); }} className="btn btn-primary">Get Started</button>
             </div>
           )}
@@ -279,7 +279,7 @@ export default function LandingPage() {
               <a href="#">Moneyback Guarantee</a>
             </div>
             <div className="footer-contact">
-              <a href="mailto:support@openclaw.new">support@openclaw.new</a>
+              <a href="mailto:support@tryopenclawai.com">support@tryopenclawai.com</a>
             </div>
           </div>
         </footer>

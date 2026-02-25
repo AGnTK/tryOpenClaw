@@ -25,7 +25,7 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 ### Billing Page Cleanup + Settings → Support
 - **Billing page**: Removed Plans section (Starter/Pro/Enterprise cards + PlanCard component). Page now only shows Stripe Customer Portal access block
 - **Settings page deleted**: Removed `/dashboard/settings` route and page entirely
-- **Support page added**: New `/dashboard/support` route with email contact link (`support@openclaw.new`)
+- **Support page added**: New `/dashboard/support` route with email contact link (`support@tryopenclawai.com`)
 - **Sidebar**: Replaced Settings nav item with Support (LifeBuoy icon)
 - **Files changed**: `src/app/dashboard/billing/page.tsx`, `src/components/dashboard/sidebar.tsx`
 - **Files deleted**: `src/app/dashboard/settings/page.tsx`
