@@ -149,6 +149,11 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **Manual step**: Add `STRIPE_FIRST_TIME_LINK` to Vercel env vars and redeploy
 - **Files changed**: `src/lib/stripe.ts`, `src/app/auth/callback/route.ts`, `src/app/dashboard/layout.tsx`, `src/app/api/webhooks/stripe/route.ts`
 
+### Provisioning: Clean Up Orphaned Fly Resources on Failure
+- **Problem**: When `createMachine` fails (e.g. Fly 412 "insufficient resources"), the already-created Fly app and volume were left orphaned. Each retry created new orphans. `flyAppName` stayed in DB preventing clean retries
+- **Fix**: Error handler now calls `destroyApp()` (cascades to volumes), clears `flyAppName`/`flyMachineId`/`instanceUrl` from tenant row, and returns the actual error message to the client
+- **Files changed**: `src/app/api/instance/provision/route.ts`
+
 ### Telegram Integration via Dashboard (E2E)
 - **Database**: Added `telegramBotToken` column (nullable) to `tenants` table
 - **Fly.ts**: Added `updateMachineEnvVars()` — reads machine config, merges/removes env vars, POSTs back (Fly auto-restarts)

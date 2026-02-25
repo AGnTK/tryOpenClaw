@@ -246,6 +246,9 @@ OpenClaw natively reads `TELEGRAM_BOT_TOKEN` from env vars. Do NOT inject `chann
 ### Fly Machines `POST /machines/{id}` Restarts the Machine
 When you POST a config update via the Fly Machines API, Fly stops and restarts the machine with the new config. Do NOT follow up with a separate `stopMachine`/`startMachine` — those functions call `setAutostart` which does its own read-modify-write of the machine config, creating a race condition that can overwrite your env var changes.
 
+### Fly 412 "Insufficient Resources" on Machine Creation
+Fly can return `412` when a zone lacks capacity to attach a volume to a new machine. This is a transient Fly infrastructure issue. The provision route now cleans up orphaned apps/volumes on failure and clears `flyAppName`/`flyMachineId` from the tenant row so retries start fresh. If persistent, consider adding region fallback.
+
 ### OpenClaw Requires `allowInsecureAuth` for Non-Localhost
 Without `allowInsecureAuth: true` in `openclaw.json`, non-localhost WebSocket connections get rejected with "pairing required" (1008). The config must also set `auth.mode: "token"` and include `trustedProxies` for Fly's internal networks.
 
