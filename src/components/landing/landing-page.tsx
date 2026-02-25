@@ -275,8 +275,8 @@ export default function LandingPage() {
               OpenClaw
             </a>
             <div className="footer-links">
-              <a href="#">Terms</a>
-              <a href="#">Privacy</a>
+              <a href="/terms">Terms</a>
+              <a href="/privacy">Privacy</a>
               <a href="/money-back-guarantee">Moneyback Guarantee</a>
             </div>
             <div className="footer-contact">

@@ -9,6 +9,7 @@
 - [ ] Email notifications (welcome, provisioning complete, payment failed)
 - [x] Onboarding guide improvements — added Integrations, Inspiration, and FAQ sections to dashboard
 - [ ] Instance log viewer (link to Fly.io log viewer)
+- [x] Legal pages (Terms, Privacy, Money-Back Guarantee) + landing page footer links
 - [ ] Dashboard redesign to match landing page visual theme
 
 ### Phase 3: Growth

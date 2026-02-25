@@ -112,6 +112,24 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **New files**: `playwright.config.ts`, `e2e/auth-unauthed.spec.ts`, `e2e/auth-authed.spec.ts`, `e2e/helpers/supabase-admin.ts`, `e2e/helpers/auth-session.ts`
 - **Modified files**: `package.json`, `.gitignore`, `.env.example`
 
+### Legal Pages: Terms, Privacy, Money-Back Guarantee
+- **Shared layout**: Extracted `LegalPageShell` component with nav (logo + Contact Support), footer (Terms/Privacy/Guarantee links + email), and all shared inline CSS
+- **Terms page** (`/terms`): 18-section Terms of Service with acceptance, payments, acceptable use, liability, etc.
+- **Privacy page** (`/privacy`): 13-section Privacy Policy with data collection, third-party services, cookies, rights, etc.
+- **Money-Back Guarantee page** (`/money-back-guarantee`): Refactored to use `LegalPageShell`. 7-day guarantee policy with eligibility, refund process, exclusions
+- **Landing page hero**: Added subtitle below Get Started button — "Set up in under a minute. Cancel anytime. Moneyback guarantee." with link to `/money-back-guarantee`
+- **Landing page footer**: Updated Terms/Privacy links from `#` to `/terms` and `/privacy`
+- **Support email**: Updated all references from `support@openclaw.new` to `support@tryopenclawai.com`
+- **New files**: `src/components/legal-page-shell.tsx`, `src/app/terms/page.tsx`, `src/app/privacy/page.tsx`
+- **Modified files**: `src/app/money-back-guarantee/page.tsx`, `src/components/landing/landing-page.tsx`, `src/app/dashboard/support/page.tsx`
+
+### Dashboard: Get Started Section Extracted
+- **Extracted** Get Started guide from `instance-status.tsx` into standalone `get-started-section.tsx`
+- **Removed** "Open Dashboard to Configure" button from Get Started section
+- **Dashboard order**: InstanceStatus → Integrations → Get Started → Inspiration → FAQ
+- **New files**: `src/components/dashboard/get-started-section.tsx`
+- **Modified files**: `src/components/dashboard/instance-status.tsx`, `src/app/dashboard/page.tsx`
+
 ### Dashboard: Integrations, Inspiration & FAQ Sections
 - **3 new sections** below instance status on dashboard page
 - **Integrations section** (`integrations-section.tsx`): 4 integration cards (Web Chat, Telegram, Slack, Discord) with configure modal per platform. Modal shows setup steps + input field. No backend — guides users to configure via OpenClaw dashboard
