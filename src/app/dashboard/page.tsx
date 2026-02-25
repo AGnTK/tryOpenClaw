@@ -1,5 +1,6 @@
 import { InstanceStatus } from "@/components/dashboard/instance-status";
 import { IntegrationsSection } from "@/components/dashboard/integrations-section";
+import { GetStartedSection } from "@/components/dashboard/get-started-section";
 import { InspirationSection } from "@/components/dashboard/inspiration-section";
 import { FAQSection } from "@/components/dashboard/faq-section";
 
@@ -15,6 +16,7 @@ export default function DashboardPage() {
 
       <InstanceStatus />
       <IntegrationsSection />
+      <GetStartedSection />
       <InspirationSection />
       <FAQSection />
     </div>
