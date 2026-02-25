@@ -240,6 +240,12 @@ The gateway needs significant memory at startup. With 1024MB VM + 768MB heap, th
 ### Config File vs Volume Mount Conflict
 Fly's `files` config writes files before volume mounts. If the file path is inside the volume mount point, the volume mount overwrites it. Solution: pass config as env var (`OPENCLAW_CONFIG_JSON`) and write it to disk at boot via `node -e` wrapper (after volume is mounted).
 
+### OpenClaw Telegram Config Requires `allowFrom: ["*"]` With `dmPolicy: "open"`
+When configuring `channels.telegram` in `openclaw.json`, using `dmPolicy: "open"` requires `allowFrom: ["*"]` to be explicitly set. Without it, OpenClaw's config validator rejects the config and the gateway exits with code 1.
+
+### Fly Machines `POST /machines/{id}` Restarts the Machine
+When you POST a config update via the Fly Machines API, Fly stops and restarts the machine with the new config. Do NOT follow up with a separate `stopMachine`/`startMachine` — those functions call `setAutostart` which does its own read-modify-write of the machine config, creating a race condition that can overwrite your env var changes.
+
 ### OpenClaw Requires `allowInsecureAuth` for Non-Localhost
 Without `allowInsecureAuth: true` in `openclaw.json`, non-localhost WebSocket connections get rejected with "pairing required" (1008). The config must also set `auth.mode: "token"` and include `trustedProxies` for Fly's internal networks.
 

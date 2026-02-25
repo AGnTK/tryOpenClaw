@@ -124,7 +124,7 @@ export async function createMachine(
   // Include Telegram channel config if bot token is pre-configured
   if (options?.telegramBotToken) {
     openclawConfigObj.channels = {
-      telegram: { enabled: true, botToken: options.telegramBotToken, dmPolicy: "open" },
+      telegram: { enabled: true, botToken: options.telegramBotToken, dmPolicy: "open", allowFrom: ["*"] },
     };
   }
 

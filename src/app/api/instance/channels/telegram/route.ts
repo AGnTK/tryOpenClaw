@@ -3,7 +3,7 @@ import { getUser } from "@/lib/supabase-server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-import { updateMachineOpenClawConfig, stopMachine, startMachine } from "@/lib/fly";
+import { updateMachineOpenClawConfig } from "@/lib/fly";
 
 async function getTenantForUser() {
   const user = await getUser();
@@ -15,12 +15,6 @@ async function getTenantForUser() {
   if (!tenant) return { error: NextResponse.json({ error: "No tenant found" }, { status: 404 }) };
 
   return { tenant };
-}
-
-async function restartMachine(appName: string, machineId: string) {
-  await stopMachine(appName, machineId);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-  await startMachine(appName, machineId);
 }
 
 export async function GET() {
@@ -83,15 +77,14 @@ export async function POST(request: Request) {
   // If machine exists, update config and restart
   if (tenant.flyAppName && tenant.flyMachineId && (tenant.status === "active" || tenant.status === "stopped")) {
     try {
+      // POST to Fly Machines API updates config AND restarts the machine automatically.
+      // No separate restart needed — calling stopMachine/startMachine after this
+      // would race and overwrite the config changes via setAutostart's read-modify-write.
       await updateMachineOpenClawConfig(tenant.flyAppName, tenant.flyMachineId, {
         channels: {
-          telegram: { enabled: true, botToken, dmPolicy: "open" },
+          telegram: { enabled: true, botToken, dmPolicy: "open", allowFrom: ["*"] },
         },
       });
-
-      if (tenant.status === "active") {
-        await restartMachine(tenant.flyAppName, tenant.flyMachineId);
-      }
     } catch (err) {
       console.error("Failed to update machine config for Telegram:", err);
       // Token is saved, but machine update failed — user can retry
@@ -125,10 +118,6 @@ export async function DELETE() {
           telegram: { enabled: false },
         },
       });
-
-      if (tenant.status === "active") {
-        await restartMachine(tenant.flyAppName, tenant.flyMachineId);
-      }
     } catch (err) {
       console.error("Failed to update machine config for Telegram removal:", err);
     }
