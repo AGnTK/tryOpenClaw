@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, CreditCard, Settings, ExternalLink, X } from "lucide-react";
+import { LayoutDashboard, CreditCard, Settings, ExternalLink } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -34,17 +34,10 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           !open && "md:w-0 md:overflow-hidden md:border-r-0"
         )}
       >
-        <div className="flex h-14 items-center justify-between border-b px-6">
+        <div className="flex h-14 items-center border-b px-6">
           <Link href="/dashboard" className="text-lg font-bold" onClick={onClose}>
             OpenClaw
           </Link>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1.5 hover:bg-accent"
-            aria-label="Close menu"
-          >
-            <X className="h-5 w-5" />
-          </button>
         </div>
         <nav className="flex-1 space-y-1 p-4">
           {navItems.map((item) => {
