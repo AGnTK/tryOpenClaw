@@ -151,14 +151,15 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 
 ### Telegram Integration via Dashboard (E2E)
 - **Database**: Added `telegramBotToken` column (nullable) to `tenants` table
-- **Fly.ts**: Added `updateMachineOpenClawConfig()` — reads current machine config, deep-merges `OPENCLAW_CONFIG_JSON`, writes back. Also updated `createMachine()` to accept optional `telegramBotToken` param for pre-provisioning config
+- **Fly.ts**: Added `updateMachineEnvVars()` — reads machine config, merges/removes env vars, POSTs back (Fly auto-restarts)
 - **New API route**: `GET/POST/DELETE /api/instance/channels/telegram`
-  - POST: Validates token via Telegram `getMe` API, stores in DB, updates machine config, restarts instance
-  - DELETE: Clears token from DB, disables telegram channel in machine config, restarts instance
+  - POST: Validates token via Telegram `getMe` API, stores in DB, sets `TELEGRAM_BOT_TOKEN` env var on machine
+  - DELETE: Clears token from DB, removes `TELEGRAM_BOT_TOKEN` env var from machine
   - GET: Returns `{ configured, botUsername }` based on stored token
-- **Provision route**: Now checks for `tenant.telegramBotToken` and includes `channels.telegram` in `OPENCLAW_CONFIG_JSON` at provision time
+- **Provision route**: If `tenant.telegramBotToken` exists, passes `TELEGRAM_BOT_TOKEN` as env var at provision time
+- **Approach**: Uses `TELEGRAM_BOT_TOKEN` env var (not `openclaw.json` channels section) — OpenClaw reads it natively, keeping the OpenClaw UI default with all channels visible
 - **UI rewrite**: `IntegrationsSection` now shows only Telegram (Web Chat, Slack, Discord removed). Fetches connection status on mount, shows Connected/Not Connected state, Configure/Reconfigure/Disconnect buttons, modal with token validation and loading state
-- **Manual step**: Run `npx drizzle-kit push` to add the new column
+- **Manual step**: Run `npx drizzle-kit push` to add the new column (or `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS telegram_bot_token TEXT`)
 - **New files**: `src/app/api/instance/channels/telegram/route.ts`
 - **Modified files**: `src/lib/schema.ts`, `src/lib/fly.ts`, `src/app/api/instance/provision/route.ts`, `src/components/dashboard/integrations-section.tsx`
 

@@ -3,7 +3,7 @@ import { getUser } from "@/lib/supabase-server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-import { updateMachineOpenClawConfig } from "@/lib/fly";
+import { updateMachineEnvVars } from "@/lib/fly";
 
 async function getTenantForUser() {
   const user = await getUser();
@@ -74,24 +74,19 @@ export async function POST(request: Request) {
     .set({ telegramBotToken: botToken, updatedAt: new Date() })
     .where(eq(tenants.id, tenant.id));
 
-  // If machine exists, update config and restart
+  // If machine exists, set TELEGRAM_BOT_TOKEN env var (Fly POST restarts the machine)
+  // OpenClaw reads this env var natively — no need to inject into openclaw.json
   if (tenant.flyAppName && tenant.flyMachineId && (tenant.status === "active" || tenant.status === "stopped")) {
     try {
-      // POST to Fly Machines API updates config AND restarts the machine automatically.
-      // No separate restart needed — calling stopMachine/startMachine after this
-      // would race and overwrite the config changes via setAutostart's read-modify-write.
-      await updateMachineOpenClawConfig(tenant.flyAppName, tenant.flyMachineId, {
-        channels: {
-          telegram: { enabled: true, botToken, dmPolicy: "open", allowFrom: ["*"] },
-        },
+      await updateMachineEnvVars(tenant.flyAppName, tenant.flyMachineId, {
+        TELEGRAM_BOT_TOKEN: botToken,
       });
     } catch (err) {
-      console.error("Failed to update machine config for Telegram:", err);
-      // Token is saved, but machine update failed — user can retry
+      console.error("Failed to update machine env for Telegram:", err);
       return NextResponse.json({
         success: true,
         botUsername,
-        warning: "Token saved but machine config update failed. Try restarting your instance.",
+        warning: "Token saved but machine update failed. Try restarting your instance.",
       });
     }
   }
@@ -110,16 +105,14 @@ export async function DELETE() {
     .set({ telegramBotToken: null, updatedAt: new Date() })
     .where(eq(tenants.id, tenant.id));
 
-  // If machine exists, remove telegram channel config and restart
+  // If machine exists, remove TELEGRAM_BOT_TOKEN env var (Fly POST restarts the machine)
   if (tenant.flyAppName && tenant.flyMachineId && (tenant.status === "active" || tenant.status === "stopped")) {
     try {
-      await updateMachineOpenClawConfig(tenant.flyAppName, tenant.flyMachineId, {
-        channels: {
-          telegram: { enabled: false },
-        },
+      await updateMachineEnvVars(tenant.flyAppName, tenant.flyMachineId, {
+        TELEGRAM_BOT_TOKEN: null,
       });
     } catch (err) {
-      console.error("Failed to update machine config for Telegram removal:", err);
+      console.error("Failed to remove Telegram env var:", err);
     }
   }
 

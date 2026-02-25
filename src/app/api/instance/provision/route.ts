@@ -65,6 +65,10 @@ export async function POST() {
       envVars.OPENROUTER_API_KEY = envVal("OPENCLAW_DEFAULT_OPENROUTER_KEY");
     }
     // Default model is configured in openclaw.json (agents.defaults.model), not env vars
+    // Telegram token passed as env var — OpenClaw reads it natively, keeps its UI default
+    if (tenant.telegramBotToken) {
+      envVars.TELEGRAM_BOT_TOKEN = tenant.telegramBotToken;
+    }
 
     const { machineId, instanceUrl } = await createMachine(
       appName,
@@ -72,8 +76,7 @@ export async function POST() {
       volumeId,
       envVars,
       gatewayToken,
-      region,
-      tenant.telegramBotToken ? { telegramBotToken: tenant.telegramBotToken } : undefined
+      region
     );
 
     // Persist machine details immediately so they're never lost
