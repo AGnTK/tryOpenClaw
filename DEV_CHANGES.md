@@ -22,6 +22,15 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **New files**: `src/components/dashboard/dashboard-shell.tsx`, `ResponsiveQA.md`
 - **Modified files**: `src/app/layout.tsx`, `src/app/globals.css`, `src/app/dashboard/layout.tsx`, `src/components/dashboard/sidebar.tsx`, `src/components/dashboard/header.tsx`, `src/components/dashboard/instance-status.tsx`, `src/components/landing/landing-page.tsx`, `src/app/dashboard/billing/page.tsx`, `src/app/dashboard/settings/page.tsx`, `src/app/checkout/success/page.tsx`, `src/app/checkout/cancel/page.tsx`
 
+### Billing Page Cleanup + Settings → Support
+- **Billing page**: Removed Plans section (Starter/Pro/Enterprise cards + PlanCard component). Page now only shows Stripe Customer Portal access block
+- **Settings page deleted**: Removed `/dashboard/settings` route and page entirely
+- **Support page added**: New `/dashboard/support` route with email contact link (`support@openclaw.new`)
+- **Sidebar**: Replaced Settings nav item with Support (LifeBuoy icon)
+- **Files changed**: `src/app/dashboard/billing/page.tsx`, `src/components/dashboard/sidebar.tsx`
+- **Files deleted**: `src/app/dashboard/settings/page.tsx`
+- **Files created**: `src/app/dashboard/support/page.tsx`
+
 ### Fix: Instance Unreachable After Provisioning (Multiple Root Causes)
 - **Root cause 1**: Machines API does not allocate IPs — no `*.fly.dev` DNS record (NXDOMAIN)
 - **Root cause 2**: Volume mounted at `/root/.openclaw` but container runs as `node` user (`/home/node`) — permission denied → crash loop

@@ -80,8 +80,8 @@ src/
 │   ├── dashboard/
 │   │   ├── layout.tsx           # Dashboard shell (server), auth + checkout redirect logic
 │   │   ├── page.tsx             # Instance status + Launch button + quick start guide
-│   │   ├── billing/page.tsx     # Stripe portal + plan comparison
-│   │   └── settings/page.tsx    # Account settings + danger zone
+│   │   ├── billing/page.tsx     # Stripe portal (subscription management only)
+│   │   └── support/page.tsx     # Support contact page (email link)
 │   └── api/
 │       ├── webhooks/stripe/route.ts     # Stripe webhook (creates tenant, handles cancellation)
 │       ├── instance/
