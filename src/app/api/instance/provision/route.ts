@@ -3,7 +3,7 @@ import { getUser } from "@/lib/supabase-server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-import { createApp, allocateIpAddresses, createVolume, createMachine, waitForMachineReady, waitForServiceReady } from "@/lib/fly";
+import { createApp, allocateIpAddresses, createVolume, createMachine, waitForMachineReady, waitForServiceReady, destroyApp } from "@/lib/fly";
 import crypto from "crypto";
 
 export async function POST() {
@@ -109,11 +109,24 @@ export async function POST() {
     return NextResponse.json({ status: "active", instanceUrl, gatewayToken });
   } catch (err) {
     console.error(`Provisioning failed for ${appName}:`, err);
-    // Revert to paid so user can retry
+    // Clean up orphaned Fly app so retries start fresh
+    try {
+      await destroyApp(appName);
+    } catch {
+      // App may not exist yet if failure was early
+    }
+    // Revert to paid and clear fly fields so user can retry cleanly
     await db
       .update(tenants)
-      .set({ status: "paid", updatedAt: new Date() })
+      .set({
+        status: "paid",
+        flyAppName: null,
+        flyMachineId: null,
+        instanceUrl: null,
+        updatedAt: new Date(),
+      })
       .where(eq(tenants.id, tenant.id));
-    return NextResponse.json({ error: "Provisioning failed" }, { status: 500 });
+    const errMsg = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: `Provisioning failed: ${errMsg}` }, { status: 500 });
   }
 }
