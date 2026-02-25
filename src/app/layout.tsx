@@ -23,6 +23,9 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "OpenClaw - Managed AI Assistant Hosting",
   description: "Deploy your own OpenClaw AI assistant instance with one click.",
+  icons: {
+    icon: "/logos/openclawlogo.svg",
+  },
 };
 
 export default function RootLayout({
