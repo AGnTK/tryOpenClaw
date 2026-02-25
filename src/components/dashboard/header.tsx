@@ -21,12 +21,10 @@ export function DashboardHeader({
         variant="ghost"
         size="icon"
         onClick={onMenuToggle}
-        className="md:hidden"
         aria-label="Toggle menu"
       >
         <Menu className="h-5 w-5" />
       </Button>
-      <div className="hidden md:block" />
       <div className="flex items-center gap-2 md:gap-4">
         <span className="max-w-[150px] truncate text-sm text-muted-foreground sm:max-w-[200px] md:max-w-none">
           {email}

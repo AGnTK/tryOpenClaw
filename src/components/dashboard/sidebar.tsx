@@ -26,8 +26,12 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col border-r bg-card transition-transform duration-200 ease-in-out md:static md:translate-x-0",
-          open ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col border-r bg-card transition-all duration-200 ease-in-out",
+          // Mobile: slide in/out as drawer
+          open ? "translate-x-0" : "-translate-x-full",
+          // Desktop: static in flow, collapse to zero width when closed
+          "md:static md:translate-x-0",
+          !open && "md:w-0 md:overflow-hidden md:border-r-0"
         )}
       >
         <div className="flex h-14 items-center justify-between border-b px-6">
@@ -36,7 +40,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           </Link>
           <button
             onClick={onClose}
-            className="rounded-md p-1.5 hover:bg-accent md:hidden"
+            className="rounded-md p-1.5 hover:bg-accent"
             aria-label="Close menu"
           >
             <X className="h-5 w-5" />
