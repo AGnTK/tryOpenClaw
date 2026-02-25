@@ -42,7 +42,7 @@ export default function BillingPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={openPortal} disabled={loading}>
+          <Button onClick={openPortal} disabled={loading} className="w-full sm:w-auto">
             {loading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (

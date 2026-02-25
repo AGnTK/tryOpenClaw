@@ -6,6 +6,22 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 
 ## Pending Changes
 
+### Full Responsive Overhaul (Mobile-First)
+- **Dashboard layout**: Created `DashboardShell` client component to manage sidebar state. Sidebar renders as slide-out drawer on mobile (<md) with backdrop overlay. Hamburger menu button in header. Sidebar auto-closes on nav link click.
+- **Header**: Hamburger toggle visible on mobile, hidden on desktop. Email truncated to 150px on small screens, 200px on sm.
+- **Sidebar**: Fixed overlay with z-50 on mobile, static on desktop. Close button (X) inside sidebar. Backdrop click to close.
+- **Landing page navbar**: Added hamburger menu for mobile (<768px). Desktop nav links hidden, replaced with dropdown panel. Proper 44px tap targets.
+- **Instance status**: Hero buttons full-width on mobile. Instance URL code block uses `min-w-0` for proper truncation. Plan/Region pill wraps on narrow screens.
+- **Billing page**: "Open Billing Portal" button full-width on mobile.
+- **Settings page**: Danger zone layout stacks vertically on mobile (text above full-width button).
+- **Checkout pages**: Card padding responsive via `clamp()`. Cancel button 44px min-height. Sign out link padded for tap target.
+- **Global CSS**: `overflow-x: hidden` on html/body. Safe-area-inset padding for iOS notch.
+- **Viewport**: Added Next.js `viewport` export with `viewportFit: "cover"` for notch support.
+- **Dashboard shell**: Uses `h-[100dvh]` for proper mobile viewport height (accounts for browser chrome).
+- **Main content**: Padding 16px on mobile, 24px on desktop.
+- **New files**: `src/components/dashboard/dashboard-shell.tsx`, `ResponsiveQA.md`
+- **Modified files**: `src/app/layout.tsx`, `src/app/globals.css`, `src/app/dashboard/layout.tsx`, `src/components/dashboard/sidebar.tsx`, `src/components/dashboard/header.tsx`, `src/components/dashboard/instance-status.tsx`, `src/components/landing/landing-page.tsx`, `src/app/dashboard/billing/page.tsx`, `src/app/dashboard/settings/page.tsx`, `src/app/checkout/success/page.tsx`, `src/app/checkout/cancel/page.tsx`
+
 ### Fix: Instance Unreachable After Provisioning (Multiple Root Causes)
 - **Root cause 1**: Machines API does not allocate IPs — no `*.fly.dev` DNS record (NXDOMAIN)
 - **Root cause 2**: Volume mounted at `/root/.openclaw` but container runs as `node` user (`/home/node`) — permission denied → crash loop

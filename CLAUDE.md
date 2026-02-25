@@ -78,7 +78,7 @@ src/
 │   │   ├── success/page.tsx     # Post-payment confirmation → polls then redirects to dashboard
 │   │   └── cancel/page.tsx      # Payment cancelled → retry or sign out
 │   ├── dashboard/
-│   │   ├── layout.tsx           # Dashboard shell (sidebar + header), requires paid tenant
+│   │   ├── layout.tsx           # Dashboard shell (server), auth + checkout redirect logic
 │   │   ├── page.tsx             # Instance status + Launch button + quick start guide
 │   │   ├── billing/page.tsx     # Stripe portal + plan comparison
 │   │   └── settings/page.tsx    # Account settings + danger zone
@@ -98,8 +98,9 @@ src/
 │   ├── landing/
 │   │   └── landing-page.tsx     # Full marketing landing page (ported from AGnTK/website)
 │   ├── dashboard/
-│   │   ├── sidebar.tsx          # Nav sidebar
-│   │   ├── header.tsx           # Top bar with email + logout
+│   │   ├── dashboard-shell.tsx  # Client wrapper: sidebar state + responsive layout (100dvh)
+│   │   ├── sidebar.tsx          # Nav sidebar (slide-out drawer on mobile, static on md+)
+│   │   ├── header.tsx           # Top bar with hamburger toggle (mobile) + email + logout
 │   │   └── instance-status.tsx  # Instance status card + Launch button + plan selector
 │   └── ui/                      # shadcn/ui components (button, card, badge, input)
 ├── lib/
@@ -189,6 +190,18 @@ public/
 - Landing page uses inline CSS (scoped under `.landing-page`) — not Tailwind
 - Checkout success/cancel pages use inline styles matching landing page theme
 - All auth redirects point to `/` (not `/auth/login` — that page was removed)
+
+### Responsive Design Conventions
+- **Mobile-first**: Tailwind breakpoints `sm:` (640px), `md:` (768px) for progressive enhancement
+- **Dashboard sidebar**: Managed by `DashboardShell` (client component). Drawer on mobile (<md), static on desktop
+- **Layout height**: Uses `h-[100dvh]` (dynamic viewport height) for proper mobile browser chrome handling
+- **Viewport**: `viewportFit: "cover"` + `env(safe-area-inset-*)` padding on body for iOS notch
+- **Buttons**: Full-width on mobile (`w-full sm:w-auto`) for primary actions
+- **Landing page mobile nav**: Hamburger toggle at <768px, dropdown panel with state in `LandingPage` component
+- **Tap targets**: Minimum 44px for primary actions (buttons, links). Use `min-height: 44px` or adequate padding
+- **Long text**: Use `truncate` + `min-w-0` for emails, URLs, IDs. Max-width constraints on small screens
+- **Responsive padding**: `clamp()` for inline-styled pages, `p-4 md:p-6` for Tailwind layouts
+- **QA checklist**: See `ResponsiveQA.md` — run through before every deploy
 
 ---
 

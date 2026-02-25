@@ -216,7 +216,7 @@ export function InstanceStatus() {
           )}
           <Button
             size="lg"
-            className="mt-6 gap-2 px-8 text-base"
+            className="mt-6 w-full gap-2 px-8 text-base sm:w-auto"
             onClick={handleLaunch}
           >
             <Rocket className="h-5 w-5" />
@@ -265,7 +265,7 @@ export function InstanceStatus() {
       {/* Hero: Open Dashboard */}
       {data.instanceUrl && data.tenantStatus === "active" && (
         <Card className="border-primary/20 bg-gradient-to-br from-background to-primary/5">
-          <CardContent className="flex flex-col items-center py-10 text-center">
+          <CardContent className="flex flex-col items-center px-4 py-8 text-center sm:px-6 sm:py-10">
             <div className="mb-4 flex items-center gap-2">
               {isRunning && <span className="relative flex h-3 w-3">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
@@ -288,7 +288,7 @@ export function InstanceStatus() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Button size="lg" className="gap-2 px-8 text-base">
+              <Button size="lg" className="w-full gap-2 px-8 text-base sm:w-auto">
                 <ExternalLink className="h-5 w-5" />
                 Open Assistant Dashboard
               </Button>
@@ -316,7 +316,7 @@ export function InstanceStatus() {
             {data.instanceUrl ? (
               <>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 truncate rounded bg-muted px-2 py-1.5 text-xs">
+                  <code className="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1.5 text-xs">
                     {data.instanceUrl}
                   </code>
                   <Button variant="ghost" size="sm" onClick={handleCopyUrl} className="shrink-0">
@@ -395,9 +395,11 @@ export function InstanceStatus() {
                 </Button>
               </>
             )}
-            <div className="flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
               Plan: <span className="font-medium text-foreground capitalize">{data.plan}</span>
-              &middot; Region: <span className="font-medium text-foreground uppercase">{data.region || "iad"}</span>
+              <span className="hidden sm:inline">&middot;</span>
+              <span className="sm:hidden w-full" />
+              Region: <span className="font-medium text-foreground uppercase">{data.region || "iad"}</span>
             </div>
           </CardContent>
         </Card>
@@ -455,7 +457,7 @@ export function InstanceStatus() {
           </div>
           <div className="mt-4 text-center">
             <a href={dashboardUrl || "#"} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" className="gap-2">
+              <Button variant="outline" className="w-full gap-2 sm:w-auto">
                 <ExternalLink className="h-4 w-4" />
                 Open Dashboard to Configure
               </Button>

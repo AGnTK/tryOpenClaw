@@ -61,7 +61,7 @@ export default function CheckoutSuccessPage() {
         background: "#ffffff",
         border: "1px solid #e5e7eb",
         borderRadius: "16px",
-        padding: "48px 40px",
+        padding: "clamp(28px, 5vw, 48px) clamp(20px, 4vw, 40px)",
         maxWidth: "440px",
         width: "100%",
         textAlign: "center",

@@ -66,14 +66,14 @@ export default function SettingsPage() {
           <CardDescription>Irreversible actions</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between rounded-lg border border-destructive/30 p-4">
+          <div className="flex flex-col gap-3 rounded-lg border border-destructive/30 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium">Cancel Subscription</p>
               <p className="text-xs text-muted-foreground">
                 Cancel your subscription and destroy your instance after the grace period.
               </p>
             </div>
-            <Button variant="destructive" size="sm" onClick={handleDeleteAccount}>
+            <Button variant="destructive" size="sm" onClick={handleDeleteAccount} className="w-full shrink-0 sm:w-auto">
               Cancel Subscription
             </Button>
           </div>

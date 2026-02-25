@@ -4,6 +4,7 @@
 
 ### Phase 2: Dashboard & Polish
 - [x] Error handling for failed provisions (retry mechanism) — reverts to "paid" on failure, waits for machine+service readiness before marking active
+- [x] Full responsive overhaul — mobile-first layout, sidebar drawer, hamburger menu, safe-area support, `ResponsiveQA.md` test checklist
 - [ ] Health check worker (Vercel cron job to check machine status)
 - [ ] Email notifications (welcome, provisioning complete, payment failed)
 - [ ] Onboarding guide improvements (step-by-step with progress tracking)

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { createSupabaseBrowser } from "@/lib/supabase-client";
 
 function signInWithGoogle() {
@@ -69,6 +70,8 @@ const useCases = [
 ];
 
 export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <>
       <style jsx global>{landingStyles}</style>
@@ -86,11 +89,33 @@ export default function LandingPage() {
               <CrabLogo id="logoGradient" />
               OpenClaw
             </a>
-            <div className="nav-links">
+            <div className="nav-links nav-links-desktop">
               <a href="mailto:support@openclaw.new">Contact Support</a>
               <button onClick={signInWithGoogle} className="btn btn-primary">Get Started</button>
             </div>
+            <button
+              className="mobile-menu-toggle"
+              onClick={() => setMobileMenuOpen((o) => !o)}
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6L6 18" /><path d="M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12h18" /><path d="M3 6h18" /><path d="M3 18h18" />
+                </svg>
+              )}
+            </button>
           </div>
+          {/* Mobile dropdown menu */}
+          {mobileMenuOpen && (
+            <div className="mobile-menu">
+              <a href="mailto:support@openclaw.new" onClick={() => setMobileMenuOpen(false)}>Contact Support</a>
+              <button onClick={() => { setMobileMenuOpen(false); signInWithGoogle(); }} className="btn btn-primary">Get Started</button>
+            </div>
+          )}
         </nav>
 
         {/* Hero Section */}
@@ -336,9 +361,6 @@ const landingStyles = `
     align-items: center;
     gap: 20px;
   }
-  .landing-page .nav-links > a:first-child {
-    display: inline;
-  }
   .landing-page .nav-links a {
     color: #4b5563;
     text-decoration: none;
@@ -346,6 +368,37 @@ const landingStyles = `
     transition: color 0.2s;
   }
   .landing-page .nav-links a:hover {
+    color: #050810;
+  }
+
+  /* Mobile menu toggle — hidden on desktop */
+  .landing-page .mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: #050810;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+  .landing-page .mobile-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 24px 20px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+  .landing-page .mobile-menu a {
+    color: #4b5563;
+    text-decoration: none;
+    font-size: 15px;
+    padding: 8px 0;
+    transition: color 0.2s;
+  }
+  .landing-page .mobile-menu a:hover {
     color: #050810;
   }
 
@@ -734,6 +787,9 @@ const landingStyles = `
     .landing-page .navbar { padding: 14px 0; }
     .landing-page .logo { font-size: 16px; }
     .landing-page .logo-icon { width: 28px; height: 28px; }
+    .landing-page .nav-links-desktop { display: none; }
+    .landing-page .mobile-menu-toggle { display: flex; }
+    .landing-page .mobile-menu { padding: 16px 20px 20px; }
     .landing-page .btn { padding: 10px 18px; font-size: 13px; }
     .landing-page .hero { padding: 60px 0 48px; }
     .landing-page .hero h1 { font-size: 36px; margin-bottom: 16px; }
@@ -770,8 +826,7 @@ const landingStyles = `
     .landing-page .navbar { padding: 12px 0; }
     .landing-page .logo { font-size: 15px; gap: 8px; }
     .landing-page .logo-icon { width: 26px; height: 26px; }
-    .landing-page .nav-links { gap: 12px; }
-    .landing-page .nav-links > a:first-child { display: none; }
+    .landing-page .mobile-menu { padding: 12px 16px 16px; }
     .landing-page .btn { padding: 12px 20px; font-size: 14px; border-radius: 6px; min-height: 44px; }
     .landing-page .hero { padding: 48px 0 40px; }
     .landing-page .hero h1 { font-size: 28px; line-height: 1.15; margin-bottom: 14px; }
