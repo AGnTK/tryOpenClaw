@@ -20,7 +20,8 @@
 
 ## Tech Debt
 
-- [ ] Add test framework (Vitest or Jest) and write tests for API routes
+- [x] Add test framework — Playwright E2E for auth flow regression tests
+- [ ] Expand E2E tests: billing flow, provisioning, API route unit tests
 - [ ] Add rate limiting to API routes
 - [ ] Add proper error boundary components
 - [ ] Consider adding Sentry or similar for error tracking

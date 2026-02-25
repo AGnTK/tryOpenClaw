@@ -75,6 +75,18 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **Deploy**: Used `vercel --prod` (git push alone only creates Preview deploys)
 - **Files changed**: `src/app/page.tsx`, `src/app/auth/callback/route.ts`, `src/app/dashboard/layout.tsx`, `src/lib/stripe.ts`
 
+### Add Playwright E2E Auth Flow Regression Tests
+- **Context**: Auth timeout on external devices was ISP-related (Jio blocking Supabase), but project had zero test infrastructure to verify auth flows
+- **What**: Playwright E2E tests in two tiers:
+  - **Tier 1 (unauthenticated)**: Landing page OAuth redirect, Supabase health, `/dashboard` redirect protection
+  - **Tier 2 (authenticated)**: Session injection via Admin API, root redirect, session persistence, logout flow
+- **Test IDs**: AUTH-01, AUTH-02, AUTH-03, AUTH-06, AUTH-07, AUTH-07b, AUTH-08, AUTH-10
+- **Run locally**: `npm run test:e2e` (starts dev server automatically)
+- **Run against production**: `E2E_BASE_URL=https://tryopenclaw.vercel.app npm run test:e2e`
+- **Requires**: `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` for Tier 2 (authed) tests
+- **New files**: `playwright.config.ts`, `e2e/auth-unauthed.spec.ts`, `e2e/auth-authed.spec.ts`, `e2e/helpers/supabase-admin.ts`, `e2e/helpers/auth-session.ts`
+- **Modified files**: `package.json`, `.gitignore`, `.env.example`
+
 ### Landing Page Redesign
 - **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo)
 - **New file**: `src/components/landing/landing-page.tsx` — all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)
