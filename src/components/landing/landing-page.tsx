@@ -157,6 +157,7 @@ export default function LandingPage() {
             </div>
 
             <button onClick={signInWithGoogle} className="btn btn-primary">Get Started</button>
+            <p className="hero-subtitle">Set up in under a minute. Cancel anytime. <a href="/money-back-guarantee" className="hero-guarantee-link">Moneyback guarantee</a>.</p>
           </div>
         </section>
 
@@ -276,7 +277,7 @@ export default function LandingPage() {
             <div className="footer-links">
               <a href="#">Terms</a>
               <a href="#">Privacy</a>
-              <a href="#">Moneyback Guarantee</a>
+              <a href="/money-back-guarantee">Moneyback Guarantee</a>
             </div>
             <div className="footer-contact">
               <a href="mailto:support@tryopenclawai.com">support@tryopenclawai.com</a>
@@ -453,6 +454,19 @@ const landingStyles = `
   .landing-page .hero .btn {
     padding: 14px 28px;
     font-size: 15px;
+  }
+  .landing-page .hero-subtitle {
+    margin-top: 16px;
+    font-size: 14px;
+    color: #6b7280;
+  }
+  .landing-page .hero-guarantee-link {
+    color: #4b5563;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .landing-page .hero-guarantee-link:hover {
+    color: #111827;
   }
   .landing-page .hero-logos-row {
     display: flex;
