@@ -264,6 +264,7 @@ export default function LandingPage() {
             <h2>Start Deploying Now</h2>
             <p>Get your personal AI assistant running in under a minute.</p>
             <button onClick={signInWithGoogle} className="btn btn-primary">Get Started</button>
+            <p className="hero-subtitle">Set up in under a minute. Cancel anytime. <a href="/money-back-guarantee" className="hero-guarantee-link">Moneyback guarantee</a>.</p>
           </div>
         </section>
 
@@ -456,9 +457,9 @@ const landingStyles = `
     font-size: 15px;
   }
   .landing-page .hero-subtitle {
-    margin-top: 16px;
-    font-size: 14px;
-    color: #6b7280;
+    margin-top: 20px;
+    font-size: 13px;
+    color: #9ca3af;
   }
   .landing-page .hero-guarantee-link {
     color: #4b5563;
