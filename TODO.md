@@ -7,7 +7,7 @@
 - [x] Full responsive overhaul — mobile-first layout, sidebar drawer, hamburger menu, safe-area support, `ResponsiveQA.md` test checklist
 - [ ] Health check worker (Vercel cron job to check machine status)
 - [ ] Email notifications (welcome, provisioning complete, payment failed)
-- [ ] Onboarding guide improvements (step-by-step with progress tracking)
+- [x] Onboarding guide improvements — added Integrations, Inspiration, and FAQ sections to dashboard
 - [ ] Instance log viewer (link to Fly.io log viewer)
 - [ ] Dashboard redesign to match landing page visual theme
 

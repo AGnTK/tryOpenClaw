@@ -112,6 +112,15 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **New files**: `playwright.config.ts`, `e2e/auth-unauthed.spec.ts`, `e2e/auth-authed.spec.ts`, `e2e/helpers/supabase-admin.ts`, `e2e/helpers/auth-session.ts`
 - **Modified files**: `package.json`, `.gitignore`, `.env.example`
 
+### Dashboard: Integrations, Inspiration & FAQ Sections
+- **3 new sections** below instance status on dashboard page
+- **Integrations section** (`integrations-section.tsx`): 4 integration cards (Web Chat, Telegram, Slack, Discord) with configure modal per platform. Modal shows setup steps + input field. No backend — guides users to configure via OpenClaw dashboard
+- **Inspiration section** (`inspiration-section.tsx`): 6 use case idea cards in responsive grid (1→2→3 cols). Server component, no state
+- **FAQ section** (`faq-section.tsx`): 6 accordion items with single-open toggle and chevron rotation
+- **No new dependencies** — modal and accordion built with `useState`
+- **New files**: `src/components/dashboard/integrations-section.tsx`, `src/components/dashboard/inspiration-section.tsx`, `src/components/dashboard/faq-section.tsx`
+- **Modified files**: `src/app/dashboard/page.tsx`
+
 ### Landing Page Redesign
 - **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo)
 - **New file**: `src/components/landing/landing-page.tsx` — all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)
