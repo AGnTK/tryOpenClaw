@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-import { createCheckoutSession } from "@/lib/stripe";
+import { createCheckoutSession, getFirstTimeCheckoutUrl } from "@/lib/stripe";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
@@ -54,19 +54,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/dashboard`);
     }
 
-    // No tenant — redirect to Stripe Checkout
+    if (!existing) {
+      // First-time user — discounted Payment Link
+      try {
+        const paymentLinkUrl = getFirstTimeCheckoutUrl(user.id, user.email!);
+        console.log("[callback] First-time user, Payment Link redirect:", user.id);
+        return NextResponse.redirect(paymentLinkUrl);
+      } catch (err) {
+        console.error("[callback] Payment Link URL failed:", err);
+        return NextResponse.redirect(`${origin}/checkout/cancel?error=checkout_failed`);
+      }
+    }
+
+    // Cancelled user — regular Stripe Checkout
     try {
-      console.log("[callback] Creating checkout for user:", user.id, user.email);
+      console.log("[callback] Returning user checkout for:", user.id, user.email);
       const checkoutUrl = await createCheckoutSession(
         user.email!,
         "pro",
         user.id
       );
-      console.log("[callback] Stripe checkout URL:", checkoutUrl);
       return NextResponse.redirect(checkoutUrl);
     } catch (err) {
       console.error("[callback] Stripe checkout failed:", err);
-      // Redirect to cancel page — has retry + sign out options
       return NextResponse.redirect(`${origin}/checkout/cancel?error=checkout_failed`);
     }
   }

@@ -56,8 +56,8 @@ export async function POST(request: NextRequest) {
 async function handleCheckoutCompleted(event: Stripe.Event) {
   const session = event.data.object as Stripe.Checkout.Session;
 
-  const userId = session.metadata?.userId;
-  const plan = session.metadata?.plan || "starter";
+  const userId = session.metadata?.userId || session.client_reference_id;
+  const plan = session.metadata?.plan || "pro";
   if (!userId) return;
 
   // Create tenant record — user must manually launch their instance from the dashboard

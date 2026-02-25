@@ -4,7 +4,7 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-import { createCheckoutSession } from "@/lib/stripe";
+import { createCheckoutSession, getFirstTimeCheckoutUrl } from "@/lib/stripe";
 
 export default async function DashboardLayout({
   children,
@@ -22,8 +22,19 @@ export default async function DashboardLayout({
     where: eq(tenants.userId, user.id),
   });
 
-  if (!tenant || tenant.status === "cancelled") {
-    // No subscription — redirect to Stripe Checkout
+  if (!tenant) {
+    // First-time user — discounted Payment Link
+    try {
+      const paymentLinkUrl = getFirstTimeCheckoutUrl(user.id, user.email!);
+      redirect(paymentLinkUrl);
+    } catch (err) {
+      console.error("[dashboard] Payment Link URL failed:", err);
+      redirect("/checkout/cancel?error=checkout_failed");
+    }
+  }
+
+  if (tenant.status === "cancelled") {
+    // Returning user — regular Stripe Checkout
     let checkoutUrl: string | null = null;
     try {
       checkoutUrl = await createCheckoutSession(user.email!, "pro", user.id);

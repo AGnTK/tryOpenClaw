@@ -117,7 +117,8 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **Terms page** (`/terms`): 18-section Terms of Service with acceptance, payments, acceptable use, liability, etc.
 - **Privacy page** (`/privacy`): 13-section Privacy Policy with data collection, third-party services, cookies, rights, etc.
 - **Money-Back Guarantee page** (`/money-back-guarantee`): Refactored to use `LegalPageShell`. 7-day guarantee policy with eligibility, refund process, exclusions
-- **Landing page hero**: Added subtitle below Get Started button — "Set up in under a minute. Cancel anytime. Moneyback guarantee." with link to `/money-back-guarantee`
+- **Landing page hero**: Added subtitle below Get Started button — "Set up in under a minute. Cancel anytime. Moneyback guarantee." with link to `/money-back-guarantee` (13px, `#9ca3af`, 20px top margin)
+- **Landing page CTA**: Same subtitle added below bottom Get Started button
 - **Landing page footer**: Updated Terms/Privacy links from `#` to `/terms` and `/privacy`
 - **Support email**: Updated all references from `support@openclaw.new` to `support@tryopenclawai.com`
 - **New files**: `src/components/legal-page-shell.tsx`, `src/app/terms/page.tsx`, `src/app/privacy/page.tsx`
@@ -138,6 +139,15 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **No new dependencies** — modal and accordion built with `useState`
 - **New files**: `src/components/dashboard/integrations-section.tsx`, `src/components/dashboard/inspiration-section.tsx`, `src/components/dashboard/faq-section.tsx`
 - **Modified files**: `src/app/dashboard/page.tsx`
+
+### First-Time User Discount via Stripe Payment Link
+- **Problem**: New users and cancelled users both got the same Stripe Checkout flow. Needed to differentiate for a $59 discounted offer via Payment Link with `50NOW` promo code
+- **Solution**: Split routing — first-time users (no tenant record) → Stripe Payment Link with `client_reference_id` + `prefilled_email`; cancelled users → regular `createCheckoutSession()`
+- **Webhook update**: `handleCheckoutCompleted()` now reads `session.client_reference_id` as fallback for `session.metadata?.userId` (Payment Links don't support custom metadata). Default plan changed from `"starter"` to `"pro"`
+- **New helper**: `getFirstTimeCheckoutUrl(userId, email)` in `stripe.ts` — reads `STRIPE_FIRST_TIME_LINK` env var, appends `client_reference_id` and `prefilled_email` URL params
+- **New env var**: `STRIPE_FIRST_TIME_LINK` — set to `https://buy.stripe.com/5kQ9AVgYefxl1V68bG6AM1r?prefilled_promo_code=50NOW`
+- **Manual step**: Add `STRIPE_FIRST_TIME_LINK` to Vercel env vars and redeploy
+- **Files changed**: `src/lib/stripe.ts`, `src/app/auth/callback/route.ts`, `src/app/dashboard/layout.tsx`, `src/app/api/webhooks/stripe/route.ts`
 
 ### Landing Page Redesign
 - **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo)

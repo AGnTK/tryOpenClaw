@@ -41,6 +41,13 @@ export async function createCheckoutSession(
   return session.url!;
 }
 
+export function getFirstTimeCheckoutUrl(userId: string, email: string): string {
+  const base = env("STRIPE_FIRST_TIME_LINK");
+  if (!base) throw new Error("STRIPE_FIRST_TIME_LINK env var not set");
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}client_reference_id=${encodeURIComponent(userId)}&prefilled_email=${encodeURIComponent(email)}`;
+}
+
 export async function createPortalSession(customerId: string): Promise<string> {
   const session = await getStripe().billingPortal.sessions.create({
     customer: customerId,
