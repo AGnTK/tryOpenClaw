@@ -85,6 +85,7 @@ src/
 │   └── api/
 │       ├── webhooks/stripe/route.ts     # Stripe webhook (creates tenant, handles cancellation)
 │       ├── instance/
+│       │   ├── channels/telegram/route.ts  # GET/POST/DELETE: Telegram bot integration
 │       │   ├── provision/route.ts       # POST: User-triggered Fly.io provisioning
 │       │   ├── status/route.ts          # GET: Live machine status from Fly
 │       │   ├── start/route.ts           # POST: Start stopped machine (re-enables autostart)

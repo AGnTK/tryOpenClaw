@@ -90,7 +90,8 @@ export async function createMachine(
   volumeId: string,
   envVars: Record<string, string>,
   gatewayToken: string,
-  region: string = "iad"
+  region: string = "iad",
+  options?: { telegramBotToken?: string }
 ): Promise<{ machineId: string; instanceUrl: string }> {
   const size = PLAN_SIZES[plan] || PLAN_SIZES.starter;
   const openClawImage = env("OPENCLAW_DOCKER_IMAGE") || "ghcr.io/openclaw/openclaw:latest";
@@ -98,7 +99,7 @@ export async function createMachine(
   // OpenClaw config: enable token auth + bypass device pairing for Fly.io proxy
   // Passed as env var and written to file at boot (can't use Fly `files` — volume mount overwrites it)
   const defaultModel = env("OPENCLAW_DEFAULT_MODEL") || "openrouter/moonshotai/kimi-k2.5";
-  const openclawConfig = JSON.stringify({
+  const openclawConfigObj: Record<string, unknown> = {
     gateway: {
       mode: "local",
       bind: "lan",
@@ -118,7 +119,16 @@ export async function createMachine(
         model: { primary: defaultModel },
       },
     },
-  });
+  };
+
+  // Include Telegram channel config if bot token is pre-configured
+  if (options?.telegramBotToken) {
+    openclawConfigObj.channels = {
+      telegram: { enabled: true, botToken: options.telegramBotToken, dmPolicy: "open" },
+    };
+  }
+
+  const openclawConfig = JSON.stringify(openclawConfigObj);
   envVars.OPENCLAW_CONFIG_JSON = openclawConfig;
 
   const res = await flyFetch(`/apps/${appName}/machines`, {
@@ -217,6 +227,51 @@ async function setAutostart(appName: string, machineId: string, enabled: boolean
       config: {
         ...machine.config,
         services,
+      },
+    }),
+  });
+}
+
+export async function updateMachineOpenClawConfig(
+  appName: string,
+  machineId: string,
+  configMerge: Record<string, unknown>
+): Promise<void> {
+  // Read current machine config
+  const res = await flyFetch(`/apps/${appName}/machines/${machineId}`);
+  const machine = await res.json();
+
+  // Parse existing OPENCLAW_CONFIG_JSON from env
+  let existingConfig: Record<string, unknown> = {};
+  try {
+    const raw = machine.config?.env?.OPENCLAW_CONFIG_JSON;
+    if (raw) existingConfig = JSON.parse(raw);
+  } catch {
+    // If parse fails, start fresh
+  }
+
+  // Deep-merge top-level keys (channels, agents, gateway, etc.)
+  const merged = { ...existingConfig };
+  for (const [key, value] of Object.entries(configMerge)) {
+    if (value === null || value === undefined) {
+      delete merged[key];
+    } else if (typeof value === "object" && !Array.isArray(value) && typeof merged[key] === "object" && !Array.isArray(merged[key])) {
+      merged[key] = { ...(merged[key] as Record<string, unknown>), ...(value as Record<string, unknown>) };
+    } else {
+      merged[key] = value;
+    }
+  }
+
+  // Write back with updated config
+  await flyFetch(`/apps/${appName}/machines/${machineId}`, {
+    method: "POST",
+    body: JSON.stringify({
+      config: {
+        ...machine.config,
+        env: {
+          ...machine.config.env,
+          OPENCLAW_CONFIG_JSON: JSON.stringify(merged),
+        },
       },
     }),
   });

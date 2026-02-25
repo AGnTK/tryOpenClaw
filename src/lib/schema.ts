@@ -22,6 +22,9 @@ export const tenants = pgTable("tenants", {
   gatewayToken: text("gateway_token"),
   defaultModel: text("default_model").default("anthropic/claude-sonnet-4-6"),
 
+  // Channel integrations
+  telegramBotToken: text("telegram_bot_token"),
+
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

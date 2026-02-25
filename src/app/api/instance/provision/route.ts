@@ -72,7 +72,8 @@ export async function POST() {
       volumeId,
       envVars,
       gatewayToken,
-      region
+      region,
+      tenant.telegramBotToken ? { telegramBotToken: tenant.telegramBotToken } : undefined
     );
 
     // Persist machine details immediately so they're never lost

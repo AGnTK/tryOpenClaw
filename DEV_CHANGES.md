@@ -149,6 +149,19 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **Manual step**: Add `STRIPE_FIRST_TIME_LINK` to Vercel env vars and redeploy
 - **Files changed**: `src/lib/stripe.ts`, `src/app/auth/callback/route.ts`, `src/app/dashboard/layout.tsx`, `src/app/api/webhooks/stripe/route.ts`
 
+### Telegram Integration via Dashboard (E2E)
+- **Database**: Added `telegramBotToken` column (nullable) to `tenants` table
+- **Fly.ts**: Added `updateMachineOpenClawConfig()` — reads current machine config, deep-merges `OPENCLAW_CONFIG_JSON`, writes back. Also updated `createMachine()` to accept optional `telegramBotToken` param for pre-provisioning config
+- **New API route**: `GET/POST/DELETE /api/instance/channels/telegram`
+  - POST: Validates token via Telegram `getMe` API, stores in DB, updates machine config, restarts instance
+  - DELETE: Clears token from DB, disables telegram channel in machine config, restarts instance
+  - GET: Returns `{ configured, botUsername }` based on stored token
+- **Provision route**: Now checks for `tenant.telegramBotToken` and includes `channels.telegram` in `OPENCLAW_CONFIG_JSON` at provision time
+- **UI rewrite**: `IntegrationsSection` now shows only Telegram (Web Chat, Slack, Discord removed). Fetches connection status on mount, shows Connected/Not Connected state, Configure/Reconfigure/Disconnect buttons, modal with token validation and loading state
+- **Manual step**: Run `npx drizzle-kit push` to add the new column
+- **New files**: `src/app/api/instance/channels/telegram/route.ts`
+- **Modified files**: `src/lib/schema.ts`, `src/lib/fly.ts`, `src/app/api/instance/provision/route.ts`, `src/components/dashboard/integrations-section.tsx`
+
 ### Landing Page Redesign
 - **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo)
 - **New file**: `src/components/landing/landing-page.tsx` — all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)
