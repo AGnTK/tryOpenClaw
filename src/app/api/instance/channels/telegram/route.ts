@@ -3,7 +3,12 @@ import { getUser } from "@/lib/supabase-server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
-import { buildOpenClawConfigJson, ensureMachineTelegramWebhookService, updateMachineEnvVars } from "@/lib/fly";
+import {
+  buildOpenClawConfigJson,
+  ensureMachineTelegramWebhookService,
+  getMachineEnvVar,
+  updateMachineEnvVars,
+} from "@/lib/fly";
 
 async function getTenantForUser() {
   const user = await getUser();
@@ -83,8 +88,22 @@ export async function POST(request: Request) {
       const envUpdates: Record<string, string | null> = {
         TELEGRAM_BOT_TOKEN: botToken,
       };
-      if (tenant.gatewayToken) {
-        envUpdates.OPENCLAW_CONFIG_JSON = buildOpenClawConfigJson(tenant.flyAppName, tenant.gatewayToken);
+      let gatewayToken = tenant.gatewayToken || "";
+      if (!gatewayToken) {
+        gatewayToken = (await getMachineEnvVar(
+          tenant.flyAppName,
+          tenant.flyMachineId,
+          "OPENCLAW_GATEWAY_TOKEN"
+        )) || "";
+      }
+      if (gatewayToken) {
+        envUpdates.OPENCLAW_CONFIG_JSON = buildOpenClawConfigJson(tenant.flyAppName, gatewayToken);
+        if (!tenant.gatewayToken) {
+          await db
+            .update(tenants)
+            .set({ gatewayToken, updatedAt: new Date() })
+            .where(eq(tenants.id, tenant.id));
+        }
       }
       await updateMachineEnvVars(tenant.flyAppName, tenant.flyMachineId, {
         ...envUpdates,

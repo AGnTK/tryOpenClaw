@@ -298,6 +298,19 @@ export async function updateMachineEnvVars(
   });
 }
 
+export async function getMachineEnvVar(
+  appName: string,
+  machineId: string,
+  key: string
+): Promise<string | null> {
+  const res = await flyFetch(`/apps/${appName}/machines/${machineId}`);
+  const machine = await res.json();
+  const raw = machine?.config?.env?.[key];
+  if (typeof raw !== "string") return null;
+  const value = raw.trim();
+  return value || null;
+}
+
 export async function ensureMachineTelegramWebhookService(
   appName: string,
   machineId: string
