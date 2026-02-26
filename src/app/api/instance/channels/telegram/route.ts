@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/supabase-server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { updateMachineEnvVars } from "@/lib/fly";
 
 async function getTenantForUser() {
@@ -11,6 +11,7 @@ async function getTenantForUser() {
 
   const tenant = await db.query.tenants.findFirst({
     where: eq(tenants.userId, user.id),
+    orderBy: [desc(tenants.updatedAt)],
   });
   if (!tenant) return { error: NextResponse.json({ error: "No tenant found" }, { status: 404 }) };
 

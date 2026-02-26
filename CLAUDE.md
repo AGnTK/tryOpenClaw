@@ -282,6 +282,9 @@ Stripe price IDs are mode-specific. A price ID from live mode (`price_...`) will
 ### Stripe Webhook Secret: Local vs Production
 `stripe listen` generates a temporary webhook signing secret that only works locally. For production (Vercel), you must create a webhook endpoint in the Stripe Dashboard (Developers → Webhooks) pointing to `{PRODUCTION_URL}/api/webhooks/stripe` and use THAT endpoint's signing secret as `STRIPE_WEBHOOK_SECRET`.
 
+### Duplicate Tenant Rows Break `findFirst` Queries
+Multiple Stripe payments (e.g., testing, retries) can create duplicate tenant rows for the same `userId`. Since `findFirst` with no ordering is non-deterministic, the wrong row (no gateway token, no fly app) can be returned — causing "pairing required" errors, missing instance data, etc. **All `findFirst` queries on `tenants` must include `orderBy: [desc(tenants.updatedAt)]`** to return the most recent/active row.
+
 ### Vercel Serverless Function Timeout Kills Long Operations
 Vercel Hobby plan has a 10s function timeout (Pro: 60s, even with `maxDuration`). Any API route that does blocking I/O (polling loops, waiting for external services) will be killed mid-execution. The `catch` block may or may not run, leading to orphaned resources. **Pattern: return immediately from the API route, then let the client poll a status endpoint.** The provision route follows this pattern — it creates Fly resources and returns `"provisioning"`, then the status route auto-promotes to `"active"` when the service is reachable.
 

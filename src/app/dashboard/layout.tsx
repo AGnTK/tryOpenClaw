@@ -3,7 +3,7 @@ import { getUser } from "@/lib/supabase-server";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { createCheckoutSession, getFirstTimeCheckoutUrl } from "@/lib/stripe";
 
 export default async function DashboardLayout({
@@ -20,6 +20,7 @@ export default async function DashboardLayout({
   // Require active subscription to access dashboard
   const tenant = await db.query.tenants.findFirst({
     where: eq(tenants.userId, user.id),
+    orderBy: [desc(tenants.updatedAt)],
   });
 
   if (!tenant) {

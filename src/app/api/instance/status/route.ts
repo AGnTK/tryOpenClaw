@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getUser } from "@/lib/supabase-server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { getMachineStatus } from "@/lib/fly";
 
 export async function GET() {
@@ -11,8 +11,10 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Order by updatedAt desc so the active/latest tenant wins if duplicates exist
   const tenant = await db.query.tenants.findFirst({
     where: eq(tenants.userId, user.id),
+    orderBy: [desc(tenants.updatedAt)],
   });
 
   if (!tenant) {
