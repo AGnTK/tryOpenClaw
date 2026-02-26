@@ -3,7 +3,7 @@ import { getUser } from "@/lib/supabase-server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
-import { updateMachineEnvVars } from "@/lib/fly";
+import { buildOpenClawConfigJson, ensureMachineTelegramWebhookService, updateMachineEnvVars } from "@/lib/fly";
 
 async function getTenantForUser() {
   const user = await getUser();
@@ -75,12 +75,19 @@ export async function POST(request: Request) {
     .set({ telegramBotToken: botToken, updatedAt: new Date() })
     .where(eq(tenants.id, tenant.id));
 
-  // If machine exists, set TELEGRAM_BOT_TOKEN env var (Fly POST restarts the machine)
-  // OpenClaw reads this env var natively — no need to inject into openclaw.json
+  // If machine exists, set TELEGRAM_BOT_TOKEN env var (Fly POST restarts the machine).
+  // OpenClaw reads this env var natively and configures Telegram provider on boot.
   if (tenant.flyAppName && tenant.flyMachineId && (tenant.status === "active" || tenant.status === "stopped")) {
     try {
-      await updateMachineEnvVars(tenant.flyAppName, tenant.flyMachineId, {
+      await ensureMachineTelegramWebhookService(tenant.flyAppName, tenant.flyMachineId);
+      const envUpdates: Record<string, string | null> = {
         TELEGRAM_BOT_TOKEN: botToken,
+      };
+      if (tenant.gatewayToken) {
+        envUpdates.OPENCLAW_CONFIG_JSON = buildOpenClawConfigJson(tenant.flyAppName, tenant.gatewayToken);
+      }
+      await updateMachineEnvVars(tenant.flyAppName, tenant.flyMachineId, {
+        ...envUpdates,
       });
     } catch (err) {
       console.error("Failed to update machine env for Telegram:", err);
@@ -92,19 +99,6 @@ export async function POST(request: Request) {
     }
   }
 
-  // Set Telegram webhook → messages arrive as HTTP POSTs → triggers Fly autostart
-  if (tenant.instanceUrl) {
-    try {
-      await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: tenant.instanceUrl }),
-      });
-    } catch (err) {
-      console.error("Failed to set Telegram webhook:", err);
-    }
-  }
-
   return NextResponse.json({ success: true, botUsername });
 }
 
@@ -113,7 +107,7 @@ export async function DELETE() {
   if ("error" in result) return result.error;
   const { tenant } = result;
 
-  // Delete Telegram webhook before clearing token
+  // Best-effort cleanup of Telegram webhook while we still have the token.
   if (tenant.telegramBotToken) {
     try {
       await fetch(`https://api.telegram.org/bot${tenant.telegramBotToken}/deleteWebhook`, {
@@ -130,7 +124,7 @@ export async function DELETE() {
     .set({ telegramBotToken: null, updatedAt: new Date() })
     .where(eq(tenants.id, tenant.id));
 
-  // If machine exists, remove TELEGRAM_BOT_TOKEN env var (Fly POST restarts the machine)
+  // If machine exists, remove TELEGRAM_BOT_TOKEN env var (Fly POST restarts the machine).
   if (tenant.flyAppName && tenant.flyMachineId && (tenant.status === "active" || tenant.status === "stopped")) {
     try {
       await updateMachineEnvVars(tenant.flyAppName, tenant.flyMachineId, {

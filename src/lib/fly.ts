@@ -48,6 +48,70 @@ const PLAN_SIZES: Record<string, { cpus: number; memoryMb: number; cpuKind: stri
   enterprise: { cpus: 2, memoryMb: 4096, cpuKind: "shared" },
 };
 
+const TELEGRAM_WEBHOOK_PATH = "/telegram-webhook";
+const TELEGRAM_WEBHOOK_PORT = 8787;
+
+function buildTelegramWebhookUrl(appName: string): string {
+  return `https://${appName}.fly.dev:8443${TELEGRAM_WEBHOOK_PATH}`;
+}
+
+function buildTelegramWebhookService() {
+  return {
+    ports: [{ port: 8443, handlers: ["tls", "http"] }],
+    protocol: "tcp",
+    internal_port: TELEGRAM_WEBHOOK_PORT,
+    autostop: "suspend",
+    autostart: true,
+    min_machines_running: 0,
+  };
+}
+
+export function buildOpenClawConfigJson(appName: string, gatewayToken: string): string {
+  const defaultModel = env("OPENCLAW_DEFAULT_MODEL") || "openrouter/moonshotai/kimi-k2.5:nitro";
+  const openclawConfigObj: Record<string, unknown> = {
+    gateway: {
+      mode: "local",
+      bind: "lan",
+      port: 18789,
+      controlUi: {
+        enabled: true,
+        allowInsecureAuth: true,
+        dangerouslyAllowHostHeaderOriginFallback: true,
+        dangerouslyDisableDeviceAuth: true,
+      },
+      auth: {
+        mode: "token",
+        token: gatewayToken,
+      },
+      trustedProxies: ["172.16.0.0/12", "10.0.0.0/8", "fdaa::/16", "fc00::/7"],
+    },
+    agents: {
+      defaults: {
+        model: { primary: defaultModel },
+      },
+    },
+    channels: {
+      telegram: {
+        enabled: true,
+        dmPolicy: "open",
+        allowFrom: ["*"],
+        webhookUrl: buildTelegramWebhookUrl(appName),
+        webhookSecret: gatewayToken,
+        webhookPath: TELEGRAM_WEBHOOK_PATH,
+        webhookHost: "0.0.0.0",
+        webhookPort: TELEGRAM_WEBHOOK_PORT,
+      },
+      whatsapp: { enabled: true },
+      discord: { enabled: true },
+      irc: { enabled: true },
+      slack: { enabled: true },
+      signal: { enabled: true },
+    },
+  };
+
+  return JSON.stringify(openclawConfigObj);
+}
+
 export async function createApp(appName: string): Promise<void> {
   await flyFetch("/apps", {
     method: "POST",
@@ -98,46 +162,7 @@ export async function createMachine(
 ): Promise<{ machineId: string; instanceUrl: string }> {
   const size = PLAN_SIZES[plan] || PLAN_SIZES.starter;
   const openClawImage = env("OPENCLAW_DOCKER_IMAGE") || "ghcr.io/openclaw/openclaw:latest";
-
-  // OpenClaw config: enable token auth + bypass device pairing for Fly.io proxy
-  // Passed as env var and written to file at boot (can't use Fly `files` — volume mount overwrites it)
-  const defaultModel = env("OPENCLAW_DEFAULT_MODEL") || "openrouter/moonshotai/kimi-k2.5:nitro";
-  const openclawConfigObj: Record<string, unknown> = {
-    gateway: {
-      mode: "local",
-      bind: "lan",
-      port: 18789,
-      controlUi: {
-        enabled: true,
-        allowInsecureAuth: true,
-        dangerouslyAllowHostHeaderOriginFallback: true,
-        dangerouslyDisableDeviceAuth: true,
-      },
-      auth: {
-        mode: "token",
-        token: gatewayToken,
-      },
-      trustedProxies: ["172.16.0.0/12", "10.0.0.0/8", "fdaa::/16", "fc00::/7"],
-    },
-    agents: {
-      defaults: {
-        model: { primary: defaultModel },
-      },
-    },
-    // Enable channel schemas so OpenClaw dashboard shows config UI for each channel.
-    // googlechat excluded — Docker image missing google-auth-library dependency.
-    channels: {
-      telegram: { enabled: true, dmPolicy: "open", allowFrom: ["*"] },
-      whatsapp: { enabled: true },
-      discord: { enabled: true },
-      irc: { enabled: true },
-      slack: { enabled: true },
-      signal: { enabled: true },
-    },
-  };
-
-  const openclawConfig = JSON.stringify(openclawConfigObj);
-  envVars.OPENCLAW_CONFIG_JSON = openclawConfig;
+  envVars.OPENCLAW_CONFIG_JSON = buildOpenClawConfigJson(appName, gatewayToken);
 
   const res = await flyFetch(`/apps/${appName}/machines`, {
     method: "POST",
@@ -176,6 +201,9 @@ export async function createMachine(
             autostop: "suspend",
             autostart: true,
             min_machines_running: 0,
+          },
+          {
+            ...buildTelegramWebhookService(),
           },
         ],
         mounts: [
@@ -265,6 +293,35 @@ export async function updateMachineEnvVars(
       config: {
         ...machine.config,
         env: updatedEnv,
+      },
+    }),
+  });
+}
+
+export async function ensureMachineTelegramWebhookService(
+  appName: string,
+  machineId: string
+): Promise<void> {
+  const res = await flyFetch(`/apps/${appName}/machines/${machineId}`);
+  const machine = await res.json();
+  const services: Array<Record<string, unknown>> = Array.isArray(machine.config?.services)
+    ? machine.config.services
+    : [];
+
+  const hasWebhookService = services.some((service) => {
+    const internalPort = Number(service.internal_port);
+    if (internalPort === TELEGRAM_WEBHOOK_PORT) return true;
+    const ports = Array.isArray(service.ports) ? service.ports : [];
+    return ports.some((portDef) => Number((portDef as Record<string, unknown>).port) === 8443);
+  });
+  if (hasWebhookService) return;
+
+  await flyFetch(`/apps/${appName}/machines/${machineId}`, {
+    method: "POST",
+    body: JSON.stringify({
+      config: {
+        ...machine.config,
+        services: [...services, buildTelegramWebhookService()],
       },
     }),
   });
