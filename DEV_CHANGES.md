@@ -168,6 +168,12 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **New files**: `src/app/api/instance/channels/telegram/route.ts`
 - **Modified files**: `src/lib/schema.ts`, `src/lib/fly.ts`, `src/app/api/instance/provision/route.ts`, `src/components/dashboard/integrations-section.tsx`
 
+### Fix OpenClaw Gateway Crash on Startup
+- **Problem 1**: Latest OpenClaw Docker image requires `controlUi.dangerouslyAllowHostHeaderOriginFallback: true` for non-loopback access. Gateway crashed with "non-loopback Control UI requires gateway.controlUi.allowedOrigins"
+- **Problem 2**: `googlechat` channel enabled but Docker image missing `google-auth-library` → crash-loop
+- **Fix**: Added `dangerouslyAllowHostHeaderOriginFallback: true` to `controlUi` config, removed `googlechat` from channels block
+- **Files changed**: `src/lib/fly.ts`
+
 ### Async Provisioning (Fix Vercel Timeout)
 - **Problem**: Provision route waited for machine boot + service readiness (2-3 min). Vercel Hobby plan kills functions at 10s, destroying the Fly app mid-provision
 - **Fix**: Provision route now creates Fly resources and returns immediately with `"provisioning"`. Status route (`GET /api/instance/status`) auto-promotes to `"active"` when machine is started + HTTP service responds `< 500`

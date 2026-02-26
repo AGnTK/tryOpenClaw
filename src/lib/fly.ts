@@ -106,6 +106,7 @@ export async function createMachine(
       controlUi: {
         enabled: true,
         allowInsecureAuth: true,
+        dangerouslyAllowHostHeaderOriginFallback: true,
       },
       auth: {
         mode: "token",
@@ -118,13 +119,13 @@ export async function createMachine(
         model: { primary: defaultModel },
       },
     },
-    // Enable channel schemas so OpenClaw dashboard shows config UI for each channel
+    // Enable channel schemas so OpenClaw dashboard shows config UI for each channel.
+    // googlechat excluded — Docker image missing google-auth-library dependency.
     channels: {
       telegram: { enabled: true },
       whatsapp: { enabled: true },
       discord: { enabled: true },
       irc: { enabled: true },
-      googlechat: { enabled: true },
       slack: { enabled: true },
       signal: { enabled: true },
       imessage: { enabled: true },

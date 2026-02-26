@@ -255,6 +255,12 @@ When you POST a config update via the Fly Machines API, Fly stops and restarts t
 ### Fly 412 "Insufficient Resources" on Machine Creation
 Fly can return `412` when a zone lacks capacity to attach a volume to a new machine. This is a transient Fly infrastructure issue. The provision route now cleans up orphaned apps/volumes on failure and clears `flyAppName`/`flyMachineId` from the tenant row so retries start fresh. If persistent, consider adding region fallback.
 
+### OpenClaw Control UI Requires Origin Fallback on Non-Localhost
+The latest OpenClaw Docker image requires `gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback: true` in `openclaw.json` for non-loopback access. Without it, the gateway crashes with: "non-loopback Control UI requires gateway.controlUi.allowedOrigins". This is in addition to `allowInsecureAuth: true`.
+
+### OpenClaw googlechat Plugin Missing Dependency
+The `ghcr.io/openclaw/openclaw:latest` Docker image is missing `google-auth-library`. Enabling `googlechat` in the `channels` config causes a crash-loop. Exclude `googlechat` from the channels block until the upstream image is fixed.
+
 ### OpenClaw Requires `allowInsecureAuth` for Non-Localhost
 Without `allowInsecureAuth: true` in `openclaw.json`, non-localhost WebSocket connections get rejected with "pairing required" (1008). The config must also set `auth.mode: "token"` and include `trustedProxies` for Fly's internal networks.
 
