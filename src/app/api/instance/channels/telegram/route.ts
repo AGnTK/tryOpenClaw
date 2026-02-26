@@ -3,12 +3,24 @@ import { getUser } from "@/lib/supabase-server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
+import crypto from "crypto";
 import {
   buildOpenClawConfigJson,
-  ensureMachineTelegramWebhookService,
   getMachineEnvVar,
+  updateMachineTelegramConfig,
   updateMachineEnvVars,
 } from "@/lib/fly";
+
+function extractGatewayTokenFromConfigJson(raw: string | null): string {
+  if (!raw) return "";
+  try {
+    const parsed = JSON.parse(raw) as { gateway?: { auth?: { token?: unknown } } };
+    const token = parsed?.gateway?.auth?.token;
+    return typeof token === "string" ? token.trim() : "";
+  } catch {
+    return "";
+  }
+}
 
 async function getTenantForUser() {
   const user = await getUser();
@@ -84,7 +96,6 @@ export async function POST(request: Request) {
   // OpenClaw reads this env var natively and configures Telegram provider on boot.
   if (tenant.flyAppName && tenant.flyMachineId && (tenant.status === "active" || tenant.status === "stopped")) {
     try {
-      await ensureMachineTelegramWebhookService(tenant.flyAppName, tenant.flyMachineId);
       const envUpdates: Record<string, string | null> = {
         TELEGRAM_BOT_TOKEN: botToken,
       };
@@ -96,16 +107,25 @@ export async function POST(request: Request) {
           "OPENCLAW_GATEWAY_TOKEN"
         )) || "";
       }
+      if (!gatewayToken) {
+        gatewayToken = extractGatewayTokenFromConfigJson(
+          await getMachineEnvVar(tenant.flyAppName, tenant.flyMachineId, "OPENCLAW_CONFIG_JSON")
+        );
+      }
+      if (!gatewayToken) {
+        gatewayToken = crypto.randomBytes(32).toString("hex");
+      }
       if (gatewayToken) {
+        envUpdates.OPENCLAW_GATEWAY_TOKEN = gatewayToken;
         envUpdates.OPENCLAW_CONFIG_JSON = buildOpenClawConfigJson(tenant.flyAppName, gatewayToken);
-        if (!tenant.gatewayToken) {
+        if (tenant.gatewayToken !== gatewayToken) {
           await db
             .update(tenants)
             .set({ gatewayToken, updatedAt: new Date() })
             .where(eq(tenants.id, tenant.id));
         }
       }
-      await updateMachineEnvVars(tenant.flyAppName, tenant.flyMachineId, {
+      await updateMachineTelegramConfig(tenant.flyAppName, tenant.flyMachineId, {
         ...envUpdates,
       });
     } catch (err) {

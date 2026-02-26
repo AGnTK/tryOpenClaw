@@ -298,6 +298,53 @@ export async function updateMachineEnvVars(
   });
 }
 
+function hasTelegramWebhookService(services: Array<Record<string, unknown>>): boolean {
+  return services.some((service) => {
+    const internalPort = Number(service.internal_port);
+    if (internalPort === TELEGRAM_WEBHOOK_PORT) return true;
+    const ports = Array.isArray(service.ports) ? service.ports : [];
+    return ports.some((portDef) => Number((portDef as Record<string, unknown>).port) === 8443);
+  });
+}
+
+// Atomically ensure Telegram webhook ingress service exists and apply env updates.
+// This avoids race conditions from multiple machine config POSTs back-to-back.
+export async function updateMachineTelegramConfig(
+  appName: string,
+  machineId: string,
+  envUpdates: Record<string, string | null>
+): Promise<void> {
+  const res = await flyFetch(`/apps/${appName}/machines/${machineId}`);
+  const machine = await res.json();
+
+  const services: Array<Record<string, unknown>> = Array.isArray(machine.config?.services)
+    ? machine.config.services
+    : [];
+  const nextServices = hasTelegramWebhookService(services)
+    ? services
+    : [...services, buildTelegramWebhookService()];
+
+  const nextEnv = { ...machine.config.env } as Record<string, string>;
+  for (const [key, value] of Object.entries(envUpdates)) {
+    if (value === null) {
+      delete nextEnv[key];
+    } else {
+      nextEnv[key] = value;
+    }
+  }
+
+  await flyFetch(`/apps/${appName}/machines/${machineId}`, {
+    method: "POST",
+    body: JSON.stringify({
+      config: {
+        ...machine.config,
+        services: nextServices,
+        env: nextEnv,
+      },
+    }),
+  });
+}
+
 export async function getMachineEnvVar(
   appName: string,
   machineId: string,
@@ -309,35 +356,6 @@ export async function getMachineEnvVar(
   if (typeof raw !== "string") return null;
   const value = raw.trim();
   return value || null;
-}
-
-export async function ensureMachineTelegramWebhookService(
-  appName: string,
-  machineId: string
-): Promise<void> {
-  const res = await flyFetch(`/apps/${appName}/machines/${machineId}`);
-  const machine = await res.json();
-  const services: Array<Record<string, unknown>> = Array.isArray(machine.config?.services)
-    ? machine.config.services
-    : [];
-
-  const hasWebhookService = services.some((service) => {
-    const internalPort = Number(service.internal_port);
-    if (internalPort === TELEGRAM_WEBHOOK_PORT) return true;
-    const ports = Array.isArray(service.ports) ? service.ports : [];
-    return ports.some((portDef) => Number((portDef as Record<string, unknown>).port) === 8443);
-  });
-  if (hasWebhookService) return;
-
-  await flyFetch(`/apps/${appName}/machines/${machineId}`, {
-    method: "POST",
-    body: JSON.stringify({
-      config: {
-        ...machine.config,
-        services: [...services, buildTelegramWebhookService()],
-      },
-    }),
-  });
 }
 
 export async function destroyMachine(appName: string, machineId: string): Promise<void> {
