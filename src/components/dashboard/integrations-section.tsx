@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, X, CheckCircle2, Loader2 } from "lucide-react";
+import { X, CheckCircle2, Loader2 } from "lucide-react";
 
 type TelegramStatus = {
   configured: boolean;
@@ -172,7 +172,7 @@ export function IntegrationsSection() {
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-secondary">
-              <MessageCircle className="h-5 w-5" />
+              <img src="/logos/Telegram_logo.svg.png" alt="Telegram" className="h-5 w-5" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
