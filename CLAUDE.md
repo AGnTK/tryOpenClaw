@@ -261,8 +261,11 @@ The latest OpenClaw Docker image requires `gateway.controlUi.dangerouslyAllowHos
 ### OpenClaw googlechat Plugin Missing Dependency
 The `ghcr.io/openclaw/openclaw:latest` Docker image is missing `google-auth-library`. Enabling `googlechat` in the `channels` config causes a crash-loop. Exclude `googlechat` from the channels block until the upstream image is fixed.
 
-### OpenClaw Requires `allowInsecureAuth` for Non-Localhost
-Without `allowInsecureAuth: true` in `openclaw.json`, non-localhost WebSocket connections get rejected with "pairing required" (1008). The config must also set `auth.mode: "token"` and include `trustedProxies` for Fly's internal networks.
+### OpenClaw iMessage Plugin Crashes on Linux
+The `imessage` channel requires the `imsg` binary (macOS-only). On Linux Docker containers, it crash-loops with "imsg rpc not ready". Exclude `imessage` from the channels block for Fly.io deployments.
+
+### OpenClaw WebSocket "Pairing Required" — Disable Device Auth for Docker/Proxy
+OpenClaw's device pairing system rejects WebSocket connections from non-localhost IPs (code 1008: "pairing required"). `allowInsecureAuth: true` only relaxes HTTPS requirements — it does NOT bypass device identity checks. For Docker/containerized deployments behind a proxy (Fly.io, Railway, etc.), you must set `controlUi.dangerouslyDisableDeviceAuth: true` in `openclaw.json`. The full `controlUi` config needed: `{ enabled: true, allowInsecureAuth: true, dangerouslyAllowHostHeaderOriginFallback: true, dangerouslyDisableDeviceAuth: true }`. Token auth (`auth.mode: "token"`) + `trustedProxies` are still required.
 
 ### OpenClaw Model Config Must Be in `openclaw.json`, Not Env Vars
 `OPENCLAW_DEFAULT_MODEL` and `OPENCLAW_PRIMARY_MODEL` are not valid OpenClaw env vars. The default model must be set in `openclaw.json` under `agents.defaults.model.primary`. API keys (`OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, etc.) *are* read from env vars.

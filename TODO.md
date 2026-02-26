@@ -22,7 +22,7 @@
 - [ ] Admin dashboard (internal: view all tenants, usage, revenue)
 
 ### Existing Instance Migration
-- [ ] Migration script to update existing instances' `openclaw.json` (add `channels` block, update model to `:nitro`) and machine config (`autostop: "suspend"`)
+- [ ] Migration script to update existing instances' `openclaw.json` (add `channels` block, update model to `:nitro`, add `dangerouslyDisableDeviceAuth: true`) and machine config (`autostop: "suspend"`)
 
 ## Tech Debt
 

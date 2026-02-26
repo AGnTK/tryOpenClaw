@@ -111,6 +111,7 @@ export async function createMachine(
         enabled: true,
         allowInsecureAuth: true,
         dangerouslyAllowHostHeaderOriginFallback: true,
+        dangerouslyDisableDeviceAuth: true,
       },
       auth: {
         mode: "token",
@@ -132,7 +133,6 @@ export async function createMachine(
       irc: { enabled: true },
       slack: { enabled: true },
       signal: { enabled: true },
-      imessage: { enabled: true },
     },
   };
 

@@ -194,6 +194,14 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **Existing instances unaffected** — changes only apply to newly provisioned machines. Existing instances need restart/reprovision to pick up new config
 - **Files changed**: `src/lib/fly.ts`
 
+### Fix WebSocket "Pairing Required" — Disable Device Auth
+- **Problem**: OpenClaw v2026.2.25 rejects WebSocket connections with code 1008 "pairing required" even with `allowInsecureAuth: true` and valid token auth. HTTP page loads work (200), but WebSocket upgrade fails — users can't chat
+- **Root cause**: `allowInsecureAuth` only relaxes HTTPS requirements, it does NOT bypass device identity/pairing checks. Docker/containerized deployments behind proxies need `dangerouslyDisableDeviceAuth: true` in `controlUi`
+- **Fix**: Added `dangerouslyDisableDeviceAuth: true` to `controlUi` config in `fly.ts`. Also removed `imessage` from channels block (crash-loops on Linux — no `imsg` binary)
+- **Verified**: WebSocket now returns `101 Switching Protocols` + `connect.challenge` (normal auth flow) instead of 1008 rejection
+- **Existing instances**: Need machine config update to pick up the new `OPENCLAW_CONFIG_JSON` env var
+- **Files changed**: `src/lib/fly.ts`, `CLAUDE.md`
+
 ### Landing Page Redesign
 - **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo)
 - **New file**: `src/components/landing/landing-page.tsx` — all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)
