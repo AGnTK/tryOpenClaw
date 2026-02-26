@@ -1,0 +1,602 @@
+.landing-page {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #ffffff;
+  color: #050810;
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.03) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.landing-page *, .landing-page *::before, .landing-page *::after {
+  box-sizing: border-box;
+}
+
+.landing-page .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Announcement Banner */
+.landing-page .announcement-banner {
+  background: linear-gradient(90deg, rgba(239,68,68,0.08) 0%, rgba(13,148,136,0.08) 100%);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding: 12px 16px;
+  text-align: center;
+}
+.landing-page .announcement-banner p {
+  font-size: 14px;
+  color: #4b5563;
+  margin: 0;
+}
+.landing-page .announcement-banner span {
+  color: #0d9488;
+  font-weight: 600;
+}
+
+/* Navigation */
+.landing-page .navbar {
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  position: sticky;
+  top: 0;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  z-index: 100;
+}
+.landing-page .navbar .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.landing-page .logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #050810;
+  font-weight: 700;
+  font-size: 18px;
+}
+.landing-page .logo-icon {
+  width: 32px;
+  height: 32px;
+}
+.landing-page .nav-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.landing-page .nav-links a {
+  color: #4b5563;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+.landing-page .nav-links a:hover {
+  color: #050810;
+}
+
+/* Mobile menu toggle — hidden on desktop */
+.landing-page .mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: #050810;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+.landing-page .mobile-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.landing-page .mobile-menu a {
+  color: #4b5563;
+  text-decoration: none;
+  font-size: 15px;
+  padding: 8px 0;
+  transition: color 0.2s;
+}
+.landing-page .mobile-menu a:hover {
+  color: #050810;
+}
+
+/* Buttons */
+.landing-page .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+}
+.landing-page .btn-primary {
+  background: #dc2626;
+  color: #ffffff !important;
+}
+.landing-page .btn-primary:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+/* Hero Section */
+.landing-page .hero {
+  padding: 80px 0 60px;
+  text-align: center;
+}
+.landing-page .hero h1 {
+  font-size: clamp(32px, 8vw, 64px);
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+}
+.landing-page .hero h1 span {
+  background: linear-gradient(135deg, #ff4d4d 0%, #991b1b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.landing-page .hero p {
+  font-size: 16px;
+  color: #4b5563;
+  max-width: 540px;
+  margin: 0 auto 32px;
+  line-height: 1.7;
+}
+.landing-page .hero .btn {
+  padding: 14px 28px;
+  font-size: 15px;
+}
+.landing-page .hero-subtitle {
+  margin-top: 20px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+.landing-page .hero-guarantee-link {
+  color: #4b5563;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.landing-page .hero-guarantee-link:hover {
+  color: #111827;
+}
+.landing-page .hero-logos-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+.landing-page .hero-logos-label {
+  font-size: 13px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+.landing-page .hero-logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #4b5563;
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+.landing-page .hero-logo:hover { opacity: 0.7; }
+.landing-page .hero-logo img {
+  height: 18px;
+  width: auto;
+}
+.landing-page .logo-spacer { width: 40px; }
+
+/* Social Proof */
+.landing-page .social-proof {
+  padding: 48px 0;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  background: #f9fafb;
+}
+.landing-page .social-proof-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9ca3af;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.landing-page .company-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.landing-page .company-logo {
+  display: flex;
+  align-items: center;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+  filter: grayscale(100%);
+}
+.landing-page .company-logo:hover {
+  opacity: 0.7;
+  filter: grayscale(0%);
+}
+.landing-page .company-logo img {
+  height: 22px;
+  width: auto;
+}
+
+/* Comparison Section */
+.landing-page .comparison { padding: 80px 0; }
+.landing-page .comparison h2 {
+  text-align: center;
+  font-size: 32px;
+  margin-bottom: 48px;
+  font-weight: 700;
+}
+.landing-page .comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.landing-page .comparison-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 28px;
+}
+.landing-page .comparison-card.highlight {
+  border-color: #0d9488;
+  box-shadow: 0 4px 24px rgba(13,148,136,0.12);
+}
+.landing-page .comparison-card h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.landing-page .comparison-card.highlight h3 { color: #0d9488; }
+.landing-page .comparison-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  font-size: 14px;
+}
+.landing-page .comparison-item:last-child { border-bottom: none; }
+.landing-page .comparison-item .label { color: #4b5563; }
+.landing-page .comparison-item .value {
+  font-family: 'JetBrains Mono', monospace;
+  color: #9ca3af;
+  font-size: 13px;
+}
+.landing-page .comparison-total {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 600;
+}
+.landing-page .comparison-total .value {
+  font-family: 'JetBrains Mono', monospace;
+}
+.landing-page .comparison-card.highlight .comparison-total .value {
+  color: #0d9488;
+  font-size: 22px;
+}
+.landing-page .comparison-note {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+.landing-page .comparison-description {
+  margin-top: 14px;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+/* Testimonials */
+.landing-page .testimonials {
+  padding: 80px 0;
+  background: #f9fafb;
+}
+.landing-page .testimonials h2 {
+  text-align: center;
+  font-size: 32px;
+  margin-bottom: 48px;
+  font-weight: 700;
+}
+.landing-page .testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.landing-page .testimonial-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px;
+  transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.landing-page .testimonial-card:hover {
+  border-color: #d1d5db;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+.landing-page .tweet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.landing-page .tweet-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.landing-page .testimonial-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff4d4d 0%, #991b1b 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  color: white;
+  overflow: hidden;
+}
+.landing-page .testimonial-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.landing-page .tweet-author-info {
+  display: flex;
+  flex-direction: column;
+}
+.landing-page .tweet-author-info h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #050810;
+  line-height: 1.2;
+}
+.landing-page .tweet-handle {
+  font-size: 13px;
+  color: #9ca3af;
+  line-height: 1.2;
+}
+.landing-page .tweet-icon {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+.landing-page .tweet-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.landing-page .testimonial-quote {
+  font-size: 15px;
+  line-height: 1.5;
+  color: #050810;
+  margin: 0;
+}
+
+/* Use Cases */
+.landing-page .use-cases { padding: 80px 0; }
+.landing-page .use-cases h2 {
+  text-align: center;
+  font-size: 32px;
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+.landing-page .use-cases > .container > p {
+  text-align: center;
+  color: #4b5563;
+  max-width: 540px;
+  margin: 0 auto 48px;
+  font-size: 15px;
+}
+.landing-page .use-cases-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.landing-page .use-case-tag {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 100px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #4b5563;
+  transition: all 0.2s;
+}
+.landing-page .use-case-tag:hover {
+  border-color: #0d9488;
+  color: #050810;
+  background: #ffffff;
+}
+
+/* CTA Section */
+.landing-page .cta {
+  padding: 100px 0;
+  background: #f9fafb;
+  text-align: center;
+}
+.landing-page .cta h2 {
+  font-size: clamp(28px, 6vw, 42px);
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+.landing-page .cta p {
+  color: #4b5563;
+  font-size: 16px;
+  margin-bottom: 32px;
+}
+.landing-page .cta .btn {
+  padding: 14px 32px;
+  font-size: 16px;
+}
+
+/* Footer */
+.landing-page .footer {
+  padding: 32px 0;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.landing-page .footer .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.landing-page .footer-links {
+  display: flex;
+  gap: 24px;
+}
+.landing-page .footer-links a {
+  color: #9ca3af;
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.2s;
+}
+.landing-page .footer-links a:hover { color: #4b5563; }
+.landing-page .footer-contact { font-size: 13px; color: #9ca3af; }
+.landing-page .footer-contact a { color: #4b5563; text-decoration: none; }
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.landing-page .hero h1,
+.landing-page .hero p,
+.landing-page .hero .btn {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+.landing-page .hero p { animation-delay: 0.1s; }
+.landing-page .hero .btn { animation-delay: 0.2s; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .landing-page .container { padding: 0 20px; }
+  .landing-page .announcement-banner p { font-size: 13px; }
+  .landing-page .navbar { padding: 14px 0; }
+  .landing-page .logo { font-size: 16px; }
+  .landing-page .logo-icon { width: 28px; height: 28px; }
+  .landing-page .nav-links-desktop { display: none; }
+  .landing-page .mobile-menu-toggle { display: flex; }
+  .landing-page .mobile-menu { padding: 16px 20px 20px; }
+  .landing-page .btn { padding: 10px 18px; font-size: 13px; }
+  .landing-page .hero { padding: 60px 0 48px; }
+  .landing-page .hero h1 { font-size: 36px; margin-bottom: 16px; }
+  .landing-page .hero p { font-size: 15px; margin-bottom: 28px; padding: 0 10px; }
+  .landing-page .social-proof { padding: 40px 0; }
+  .landing-page .company-logos { gap: 24px; }
+  .landing-page .comparison { padding: 60px 0; }
+  .landing-page .comparison h2 { font-size: 28px; margin-bottom: 36px; }
+  .landing-page .comparison-grid { grid-template-columns: 1fr; gap: 20px; }
+  .landing-page .comparison-card { padding: 24px; }
+  .landing-page .testimonials { padding: 60px 0; }
+  .landing-page .testimonials h2 { font-size: 28px; margin-bottom: 36px; }
+  .landing-page .testimonials-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .landing-page .testimonial-card { padding: 14px; }
+  .landing-page .testimonial-avatar { width: 36px; height: 36px; font-size: 13px; }
+  .landing-page .tweet-author-info h4 { font-size: 13px; }
+  .landing-page .tweet-handle { font-size: 12px; }
+  .landing-page .testimonial-quote { font-size: 14px; }
+  .landing-page .use-cases { padding: 60px 0; }
+  .landing-page .use-cases h2 { font-size: 28px; }
+  .landing-page .use-cases > .container > p { font-size: 14px; margin-bottom: 36px; }
+  .landing-page .use-case-tag { padding: 8px 14px; font-size: 12px; }
+  .landing-page .cta { padding: 80px 0; }
+  .landing-page .cta h2 { font-size: 32px; }
+  .landing-page .footer .container { flex-direction: column; text-align: center; gap: 16px; }
+  .landing-page .footer-links { gap: 20px; }
+}
+
+@media (max-width: 480px) {
+  .landing-page .desktop-break { display: none; }
+  .landing-page .container { padding: 0 16px; }
+  .landing-page .announcement-banner { padding: 10px 12px; }
+  .landing-page .announcement-banner p { font-size: 12px; }
+  .landing-page .navbar { padding: 12px 0; }
+  .landing-page .logo { font-size: 15px; gap: 8px; }
+  .landing-page .logo-icon { width: 26px; height: 26px; }
+  .landing-page .mobile-menu { padding: 12px 16px 16px; }
+  .landing-page .btn { padding: 12px 20px; font-size: 14px; border-radius: 6px; min-height: 44px; }
+  .landing-page .hero { padding: 48px 0 40px; }
+  .landing-page .hero h1 { font-size: 28px; line-height: 1.15; margin-bottom: 14px; }
+  .landing-page .hero h1 br { display: none; }
+  .landing-page .hero p { font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+  .landing-page .hero .btn { padding: 14px 24px; font-size: 14px; width: 100%; max-width: 280px; min-height: 48px; }
+  .landing-page .hero-logos-row { gap: 16px; }
+  .landing-page .hero-logo { font-size: 13px; gap: 6px; }
+  .landing-page .social-proof { padding: 32px 0; }
+  .landing-page .company-logos { gap: 16px 20px; }
+  .landing-page .comparison { padding: 48px 0; }
+  .landing-page .comparison h2 { font-size: 24px; margin-bottom: 28px; }
+  .landing-page .comparison-card { padding: 20px; border-radius: 12px; }
+  .landing-page .comparison-card h3 { font-size: 16px; margin-bottom: 16px; }
+  .landing-page .comparison-item { padding: 8px 0; font-size: 13px; }
+  .landing-page .comparison-item .value { font-size: 12px; }
+  .landing-page .comparison-total { margin-top: 16px; padding-top: 16px; font-size: 15px; }
+  .landing-page .comparison-card.highlight .comparison-total .value { font-size: 20px; }
+  .landing-page .comparison-note { font-size: 11px; }
+  .landing-page .comparison-description { font-size: 13px; }
+  .landing-page .testimonials { padding: 48px 0; }
+  .landing-page .testimonials h2 { font-size: 24px; margin-bottom: 28px; }
+  .landing-page .testimonials-grid { grid-template-columns: 1fr; gap: 12px; }
+  .landing-page .testimonial-card { padding: 14px; }
+  .landing-page .tweet-header { margin-bottom: 10px; }
+  .landing-page .testimonial-avatar { width: 32px; height: 32px; font-size: 12px; }
+  .landing-page .tweet-author-info h4 { font-size: 13px; }
+  .landing-page .tweet-handle { font-size: 11px; }
+  .landing-page .tweet-icon svg { width: 16px; height: 16px; }
+  .landing-page .testimonial-quote { font-size: 13px; }
+  .landing-page .use-cases { padding: 48px 0; }
+  .landing-page .use-cases h2 { font-size: 24px; margin-bottom: 12px; }
+  .landing-page .use-cases > .container > p { font-size: 13px; margin-bottom: 28px; }
+  .landing-page .use-cases-grid { gap: 6px; }
+  .landing-page .use-case-tag { padding: 6px 12px; font-size: 11px; }
+  .landing-page .cta { padding: 60px 0; }
+  .landing-page .cta h2 { font-size: 26px; margin-bottom: 14px; }
+  .landing-page .cta p { font-size: 14px; margin-bottom: 24px; }
+  .landing-page .cta .btn { padding: 14px 28px; font-size: 14px; width: 100%; max-width: 280px; min-height: 48px; }
+  .landing-page .footer { padding: 24px 0; }
+  .landing-page .footer .logo { font-size: 14px; }
+  .landing-page .footer-links { gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .landing-page .footer-links a { font-size: 12px; }
+  .landing-page .footer-contact { font-size: 12px; }
+}
+
+@media (max-width: 360px) {
+  .landing-page .hero h1 { font-size: 24px; }
+  .landing-page .comparison-item { flex-direction: column; gap: 4px; }
+  .landing-page .comparison-item .value { text-align: left; }
+  .landing-page .company-logos { gap: 12px 16px; }
+}

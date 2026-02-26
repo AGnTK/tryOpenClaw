@@ -216,6 +216,7 @@ See `.env.example` for all required variables. Key groups:
 - `OPENCLAW_DOCKER_IMAGE` — Docker image (default: `ghcr.io/openclaw/openclaw:latest`)
 - `OPENCLAW_DEFAULT_ANTHROPIC_KEY`, `OPENCLAW_DEFAULT_OPENAI_KEY`, `OPENCLAW_DEFAULT_OPENROUTER_KEY` — Optional pre-configured AI keys for tenant instances
 - `OPENCLAW_DEFAULT_MODEL` — Default model for new instances, set in `openclaw.json` `agents.defaults.model` (default: `openrouter/moonshotai/kimi-k2.5:nitro`)
+- `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST` — PostHog analytics (optional, no-ops when absent)
 - `NEXT_PUBLIC_APP_URL` — Base URL for redirects
 
 ---

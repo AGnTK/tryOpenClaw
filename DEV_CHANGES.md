@@ -208,6 +208,16 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **Fix**: Set `channels.telegram: { enabled: true, dmPolicy: "open", allowFrom: ["*"] }` in `openclaw.json` config
 - **Files changed**: `src/lib/fly.ts`, `CLAUDE.md`
 
+### PostHog Analytics Integration
+- **SDK**: Installed `posthog-js`, created `PHProvider` client component wrapping root layout
+- **Auto-capture**: Pageviews and pageleaves tracked automatically when `NEXT_PUBLIC_POSTHOG_KEY` is set; no-ops gracefully when absent
+- **Landing page events**: `get_started_clicked` with `{ location }` — tracks hero, navbar, and CTA button clicks
+- **Checkout events**: `checkout_completed` (on success poll confirmation), `checkout_cancelled` (on cancel page load), `checkout_retry_clicked` (on Try Again click)
+- **New env vars**: `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST` (defaults to `https://us.i.posthog.com`)
+- **Manual step**: Add `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST` to Vercel env vars
+- **New files**: `src/components/posthog-provider.tsx`
+- **Modified files**: `src/app/layout.tsx`, `src/components/landing/landing-page.tsx`, `src/app/checkout/success/page.tsx`, `src/app/checkout/cancel/page.tsx`, `.env.example`
+
 ### Landing Page Redesign
 - **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo)
 - **New file**: `src/components/landing/landing-page.tsx` — all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)

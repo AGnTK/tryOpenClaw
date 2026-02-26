@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePostHog } from "posthog-js/react";
 
 export default function CheckoutCancelPage() {
+  const posthog = usePostHog();
+  const tracked = useRef(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!tracked.current) {
+      posthog?.capture("checkout_cancelled");
+      tracked.current = true;
+    }
+  }, [posthog]);
+
   async function handleRetry() {
+    posthog?.capture("checkout_retry_clicked");
     setLoading(true);
     setError(null);
     try {

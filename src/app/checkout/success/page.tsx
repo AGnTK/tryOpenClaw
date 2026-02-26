@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 
 export default function CheckoutSuccessPage() {
   const router = useRouter();
+  const posthog = usePostHog();
+  const tracked = useRef(false);
   const [status, setStatus] = useState<"polling" | "ready">("polling");
 
   useEffect(() => {
@@ -15,6 +18,10 @@ export default function CheckoutSuccessPage() {
         try {
           const res = await fetch("/api/instance/status");
           if (res.ok) {
+            if (!tracked.current) {
+              posthog?.capture("checkout_completed");
+              tracked.current = true;
+            }
             setStatus("ready");
             await new Promise((r) => setTimeout(r, 1500));
             if (!cancelled) router.push("/dashboard");
