@@ -264,6 +264,9 @@ The `ghcr.io/openclaw/openclaw:latest` Docker image is missing `google-auth-libr
 ### OpenClaw iMessage Plugin Crashes on Linux
 The `imessage` channel requires the `imsg` binary (macOS-only). On Linux Docker containers, it crash-loops with "imsg rpc not ready". Exclude `imessage` from the channels block for Fly.io deployments.
 
+### OpenClaw Telegram `dmPolicy: "open"` Requires `allowFrom: ["*"]`
+Setting `dmPolicy: "open"` without `allowFrom: ["*"]` crashes the gateway at startup with a config validation error. The default `dmPolicy` is `"pairing"` which silently drops messages from non-paired users — set `dmPolicy: "open"` + `allowFrom: ["*"]` for SaaS deployments where any Telegram user should be able to message the bot.
+
 ### OpenClaw WebSocket "Pairing Required" — Disable Device Auth for Docker/Proxy
 OpenClaw's device pairing system rejects WebSocket connections from non-localhost IPs (code 1008: "pairing required"). `allowInsecureAuth: true` only relaxes HTTPS requirements — it does NOT bypass device identity checks. For Docker/containerized deployments behind a proxy (Fly.io, Railway, etc.), you must set `controlUi.dangerouslyDisableDeviceAuth: true` in `openclaw.json`. The full `controlUi` config needed: `{ enabled: true, allowInsecureAuth: true, dangerouslyAllowHostHeaderOriginFallback: true, dangerouslyDisableDeviceAuth: true }`. Token auth (`auth.mode: "token"`) + `trustedProxies` are still required.
 

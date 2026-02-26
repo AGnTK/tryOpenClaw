@@ -202,6 +202,12 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **Existing instances**: Need machine config update to pick up the new `OPENCLAW_CONFIG_JSON` env var
 - **Files changed**: `src/lib/fly.ts`, `CLAUDE.md`
 
+### Fix Telegram Bot Not Replying — Open DM Policy
+- **Problem**: Telegram provider starts and polls successfully, but silently drops all incoming messages — bot never replies
+- **Root cause**: Default `dmPolicy` is `"pairing"` — non-paired users are silently ignored. Also, `dmPolicy: "open"` requires `allowFrom: ["*"]` or the gateway crashes at startup with config validation error
+- **Fix**: Set `channels.telegram: { enabled: true, dmPolicy: "open", allowFrom: ["*"] }` in `openclaw.json` config
+- **Files changed**: `src/lib/fly.ts`, `CLAUDE.md`
+
 ### Landing Page Redesign
 - **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo)
 - **New file**: `src/components/landing/landing-page.tsx` — all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)

@@ -127,7 +127,7 @@ export async function createMachine(
     // Enable channel schemas so OpenClaw dashboard shows config UI for each channel.
     // googlechat excluded — Docker image missing google-auth-library dependency.
     channels: {
-      telegram: { enabled: true },
+      telegram: { enabled: true, dmPolicy: "open", allowFrom: ["*"] },
       whatsapp: { enabled: true },
       discord: { enabled: true },
       irc: { enabled: true },
