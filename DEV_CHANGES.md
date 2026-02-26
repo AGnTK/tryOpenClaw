@@ -168,6 +168,13 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **New files**: `src/app/api/instance/channels/telegram/route.ts`
 - **Modified files**: `src/lib/schema.ts`, `src/lib/fly.ts`, `src/app/api/instance/provision/route.ts`, `src/components/dashboard/integrations-section.tsx`
 
+### Fly Machine Config Improvements (3 Changes)
+- **`autostop: "suspend"`**: Changed from `"stop"` to `"suspend"` in `createMachine()`. Machines suspend to memory instead of shutting down — resume in ~1-3s vs ~10-30s cold boot. Suspended machines still incur reduced memory billing
+- **Channel schemas enabled**: Added `channels` block to `openclaw.json` config with `{ enabled: true }` for 8 channels (Telegram, WhatsApp, Discord, IRC, Google Chat, Slack, Signal, iMessage). Fixes "Channel config schema unavailable" in OpenClaw dashboard
+- **Default model → Kimi K2.5 Nitro**: Changed default from `kimi-k2.5` to `kimi-k2.5:nitro` — same model, faster inference via optimized provider routing on OpenRouter
+- **Existing instances unaffected** — changes only apply to newly provisioned machines. Existing instances need restart/reprovision to pick up new config
+- **Files changed**: `src/lib/fly.ts`
+
 ### Landing Page Redesign
 - **Replaced root `/` page**: Unauthenticated users now see the full marketing landing page (ported from AGnTK/website repo)
 - **New file**: `src/components/landing/landing-page.tsx` — all sections (hero, social proof, comparison, testimonials, use cases, CTA, footer)

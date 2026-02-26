@@ -21,6 +21,9 @@
 - [ ] Team/org support (multiple users per tenant)
 - [ ] Admin dashboard (internal: view all tenants, usage, revenue)
 
+### Existing Instance Migration
+- [ ] Migration script to update existing instances' `openclaw.json` (add `channels` block, update model to `:nitro`) and machine config (`autostop: "suspend"`)
+
 ## Tech Debt
 
 - [x] Add test framework — Playwright E2E for auth flow regression tests

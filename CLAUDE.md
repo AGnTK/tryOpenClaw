@@ -174,7 +174,7 @@ public/
 - **Config injection**: `OPENCLAW_CONFIG_JSON` env var → written to `openclaw.json` at boot via `node -e` wrapper
 - **CMD pattern**: Must use `node` as argv[0] (not `sh`) — `docker-entrypoint.sh` expects it for correct setup
 - **Channels**: 13+ supported (Telegram, Discord, Slack, WhatsApp, Signal, etc.)
-- **Default model**: Kimi K2.5 via OpenRouter (`openrouter/moonshotai/kimi-k2.5`) — set via `agents.defaults.model` in `openclaw.json`, not via env var (OpenClaw ignores model env vars)
+- **Default model**: Kimi K2.5 Nitro via OpenRouter (`openrouter/moonshotai/kimi-k2.5:nitro`) — set via `agents.defaults.model` in `openclaw.json`, not via env var (OpenClaw ignores model env vars)
 - **We don't touch OpenClaw internals** — all AI/channel/agent config is user-managed (users can add their own API keys for premium models via the OpenClaw dashboard)
 
 ### Database
@@ -215,7 +215,7 @@ See `.env.example` for all required variables. Key groups:
 - `FLY_API_TOKEN`, `FLY_ORG` — Fly.io
 - `OPENCLAW_DOCKER_IMAGE` — Docker image (default: `ghcr.io/openclaw/openclaw:latest`)
 - `OPENCLAW_DEFAULT_ANTHROPIC_KEY`, `OPENCLAW_DEFAULT_OPENAI_KEY`, `OPENCLAW_DEFAULT_OPENROUTER_KEY` — Optional pre-configured AI keys for tenant instances
-- `OPENCLAW_DEFAULT_MODEL` — Default model for new instances, set in `openclaw.json` `agents.defaults.model` (default: `openrouter/moonshotai/kimi-k2.5`)
+- `OPENCLAW_DEFAULT_MODEL` — Default model for new instances, set in `openclaw.json` `agents.defaults.model` (default: `openrouter/moonshotai/kimi-k2.5:nitro`)
 - `NEXT_PUBLIC_APP_URL` — Base URL for redirects
 
 ---
@@ -241,7 +241,13 @@ The gateway needs significant memory at startup. With 1024MB VM + 768MB heap, th
 Fly's `files` config writes files before volume mounts. If the file path is inside the volume mount point, the volume mount overwrites it. Solution: pass config as env var (`OPENCLAW_CONFIG_JSON`) and write it to disk at boot via `node -e` wrapper (after volume is mounted).
 
 ### Telegram: Use Env Var, Not `openclaw.json` Channels Section
-OpenClaw natively reads `TELEGRAM_BOT_TOKEN` from env vars. Do NOT inject `channels.telegram` into `openclaw.json` — doing so overrides OpenClaw's default channel UI and causes "Unsupported schema node" warnings. Set `TELEGRAM_BOT_TOKEN` as a machine env var via `updateMachineEnvVars()` and let OpenClaw handle channel setup with its own defaults.
+OpenClaw natively reads `TELEGRAM_BOT_TOKEN` from env vars. Do NOT inject full channel config (tokens, connection details) into `openclaw.json` — doing so overrides OpenClaw's default channel UI and causes "Unsupported schema node" warnings. Set `TELEGRAM_BOT_TOKEN` as a machine env var via `updateMachineEnvVars()` and let OpenClaw handle channel setup with its own defaults.
+
+### Channel Config Schemas Require `{ enabled: true }` Flags
+OpenClaw's dashboard shows "Channel config schema unavailable" unless `openclaw.json` includes a `channels` block with `{ enabled: true }` for each channel. This is distinct from injecting full channel config (tokens, etc.) — only the `enabled` flag is needed to make OpenClaw render the config UI. The `channels` block in `createMachine()` sets all supported channels to `{ enabled: true }`.
+
+### Fly `autostop: "suspend"` for Fast Resume
+Machines use `autostop: "suspend"` (not `"stop"`) so the VM suspends to memory instead of fully shutting down. Resume from suspend takes ~1-3s vs ~10-30s for cold boot. Suspended machines still incur memory billing at a reduced rate.
 
 ### Fly Machines `POST /machines/{id}` Restarts the Machine
 When you POST a config update via the Fly Machines API, Fly stops and restarts the machine with the new config. Do NOT follow up with a separate `stopMachine`/`startMachine` — those functions call `setAutostart` which does its own read-modify-write of the machine config, creating a race condition that can overwrite your env var changes.

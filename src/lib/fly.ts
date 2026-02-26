@@ -97,7 +97,7 @@ export async function createMachine(
 
   // OpenClaw config: enable token auth + bypass device pairing for Fly.io proxy
   // Passed as env var and written to file at boot (can't use Fly `files` — volume mount overwrites it)
-  const defaultModel = env("OPENCLAW_DEFAULT_MODEL") || "openrouter/moonshotai/kimi-k2.5";
+  const defaultModel = env("OPENCLAW_DEFAULT_MODEL") || "openrouter/moonshotai/kimi-k2.5:nitro";
   const openclawConfigObj: Record<string, unknown> = {
     gateway: {
       mode: "local",
@@ -117,6 +117,17 @@ export async function createMachine(
       defaults: {
         model: { primary: defaultModel },
       },
+    },
+    // Enable channel schemas so OpenClaw dashboard shows config UI for each channel
+    channels: {
+      telegram: { enabled: true },
+      whatsapp: { enabled: true },
+      discord: { enabled: true },
+      irc: { enabled: true },
+      googlechat: { enabled: true },
+      slack: { enabled: true },
+      signal: { enabled: true },
+      imessage: { enabled: true },
     },
   };
 
@@ -157,7 +168,7 @@ export async function createMachine(
             ],
             protocol: "tcp",
             internal_port: 18789,
-            autostop: "stop",
+            autostop: "suspend",
             autostart: true,
             min_machines_running: 0,
           },
