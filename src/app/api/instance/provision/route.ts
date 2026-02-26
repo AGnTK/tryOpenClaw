@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+
+// Vercel Pro: up to 300s, Hobby: up to 60s. Provisioning needs ~2-3 min for cold boot.
+export const maxDuration = 300;
+
 import { getUser } from "@/lib/supabase-server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
@@ -89,14 +93,14 @@ export async function POST() {
       })
       .where(eq(tenants.id, tenant.id));
 
-    // Wait for the machine to reach "started" state
-    const machineReady = await waitForMachineReady(appName, machineId);
+    // Wait for the machine to reach "started" state (90s — image pull + boot)
+    const machineReady = await waitForMachineReady(appName, machineId, 90_000);
     if (!machineReady) {
       throw new Error("Machine failed to start within timeout");
     }
 
-    // Wait for the HTTP service to accept connections
-    const serviceReady = await waitForServiceReady(instanceUrl);
+    // Wait for the HTTP service to accept connections (180s — OpenClaw gateway init)
+    const serviceReady = await waitForServiceReady(instanceUrl, 180_000);
     if (!serviceReady) {
       throw new Error("Service not reachable within timeout");
     }
