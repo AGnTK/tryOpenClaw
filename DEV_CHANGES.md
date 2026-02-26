@@ -168,6 +168,12 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **New files**: `src/app/api/instance/channels/telegram/route.ts`
 - **Modified files**: `src/lib/schema.ts`, `src/lib/fly.ts`, `src/app/api/instance/provision/route.ts`, `src/components/dashboard/integrations-section.tsx`
 
+### Region Fallback for Fly Capacity Errors (409/412)
+- **Problem**: `iad` region out of capacity — Fly returns `409: insufficient memory` or `412: insufficient resources`, provisioning fails
+- **Fix**: Provision route now tries regions in order: `iad` → `ord` → `ewr` → `sjc`. On capacity errors, deletes the failed volume and retries next region. Non-capacity errors break immediately
+- **New helper**: `deleteVolume()` in `fly.ts`
+- **Files changed**: `src/lib/fly.ts`, `src/app/api/instance/provision/route.ts`
+
 ### Fix OpenClaw Gateway Crash on Startup
 - **Problem 1**: Latest OpenClaw Docker image requires `controlUi.dangerouslyAllowHostHeaderOriginFallback: true` for non-loopback access. Gateway crashed with "non-loopback Control UI requires gateway.controlUi.allowedOrigins"
 - **Problem 2**: `googlechat` channel enabled but Docker image missing `google-auth-library` → crash-loop

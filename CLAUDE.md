@@ -252,8 +252,8 @@ Machines use `autostop: "suspend"` (not `"stop"`) so the VM suspends to memory i
 ### Fly Machines `POST /machines/{id}` Restarts the Machine
 When you POST a config update via the Fly Machines API, Fly stops and restarts the machine with the new config. Do NOT follow up with a separate `stopMachine`/`startMachine` — those functions call `setAutostart` which does its own read-modify-write of the machine config, creating a race condition that can overwrite your env var changes.
 
-### Fly 412 "Insufficient Resources" on Machine Creation
-Fly can return `412` when a zone lacks capacity to attach a volume to a new machine. This is a transient Fly infrastructure issue. The provision route now cleans up orphaned apps/volumes on failure and clears `flyAppName`/`flyMachineId` from the tenant row so retries start fresh. If persistent, consider adding region fallback.
+### Fly 409/412 "Insufficient Resources" — Region Fallback
+Fly returns `409` (insufficient memory) or `412` (insufficient volume capacity) when a region is out of resources. The provision route now tries multiple regions in order: `iad` → `ord` → `ewr` → `sjc`. On capacity errors, it deletes the failed volume and retries in the next region. Non-capacity errors (auth, config) break immediately. The app + IPs are created once (region-agnostic); only volumes + machines are region-specific.
 
 ### OpenClaw Control UI Requires Origin Fallback on Non-Localhost
 The latest OpenClaw Docker image requires `gateway.controlUi.dangerouslyAllowHostHeaderOriginFallback: true` in `openclaw.json` for non-loopback access. Without it, the gateway crashes with: "non-loopback Control UI requires gateway.controlUi.allowedOrigins". This is in addition to `allowInsecureAuth: true`.

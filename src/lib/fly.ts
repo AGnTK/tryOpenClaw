@@ -84,6 +84,10 @@ export async function createVolume(
   return data.id;
 }
 
+export async function deleteVolume(appName: string, volumeId: string): Promise<void> {
+  await flyFetch(`/apps/${appName}/volumes/${volumeId}`, { method: "DELETE" });
+}
+
 export async function createMachine(
   appName: string,
   plan: string,
