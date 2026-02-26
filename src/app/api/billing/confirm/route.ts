@@ -17,6 +17,11 @@ export async function GET(request: NextRequest) {
   const isPaid = session.payment_status === "paid" || session.status === "complete";
   if (!isPaid) return NextResponse.json({ ready: false }, { status: 202 });
 
+  const sessionUserId = session.metadata?.userId || session.client_reference_id;
+  if (sessionUserId && sessionUserId !== user.id) {
+    return NextResponse.json({ error: "Session/user mismatch" }, { status: 403 });
+  }
+
   const email = session.customer_email || session.customer_details?.email || user.email || "";
   const stripeCustomerId = typeof session.customer === "string" ? session.customer : null;
   const stripeSubscriptionId = typeof session.subscription === "string" ? session.subscription : null;
