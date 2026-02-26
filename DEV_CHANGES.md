@@ -202,6 +202,14 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **Existing instances**: Need machine config update to pick up the new `OPENCLAW_CONFIG_JSON` env var
 - **Files changed**: `src/lib/fly.ts`, `CLAUDE.md`
 
+### Auto-Wake Fly.io Instance on Telegram Messages
+- **Problem**: When Fly machine suspends (via `autostop: "suspend"`), OpenClaw's long-polling Telegram connection drops. No HTTP traffic arrives to trigger Fly's autostart, so the bot goes silent until someone visits the dashboard
+- **Fix**: Register a Telegram webhook (`setWebhook`) pointing to the Fly instance URL. Telegram sends HTTP POSTs for each message → triggers Fly autostart → machine wakes → OpenClaw processes the message
+- **POST handler**: After injecting token into machine, calls `setWebhook` with `tenant.instanceUrl`. Non-blocking — webhook failure doesn't block the response
+- **DELETE handler**: Calls `deleteWebhook` before clearing token from DB
+- **Status route**: On `provisioning → active` promotion, sets Telegram webhook (fire-and-forget) if token exists — handles case where Telegram was configured before provisioning
+- **Files changed**: `src/app/api/instance/channels/telegram/route.ts`, `src/app/api/instance/status/route.ts`
+
 ### Fix Telegram Bot Not Replying — Open DM Policy
 - **Problem**: Telegram provider starts and polls successfully, but silently drops all incoming messages — bot never replies
 - **Root cause**: Default `dmPolicy` is `"pairing"` — non-paired users are silently ignored. Also, `dmPolicy: "open"` requires `allowFrom: ["*"]` or the gateway crashes at startup with config validation error

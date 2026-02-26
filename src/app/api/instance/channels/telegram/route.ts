@@ -92,6 +92,19 @@ export async function POST(request: Request) {
     }
   }
 
+  // Set Telegram webhook → messages arrive as HTTP POSTs → triggers Fly autostart
+  if (tenant.instanceUrl) {
+    try {
+      await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: tenant.instanceUrl }),
+      });
+    } catch (err) {
+      console.error("Failed to set Telegram webhook:", err);
+    }
+  }
+
   return NextResponse.json({ success: true, botUsername });
 }
 
@@ -99,6 +112,17 @@ export async function DELETE() {
   const result = await getTenantForUser();
   if ("error" in result) return result.error;
   const { tenant } = result;
+
+  // Delete Telegram webhook before clearing token
+  if (tenant.telegramBotToken) {
+    try {
+      await fetch(`https://api.telegram.org/bot${tenant.telegramBotToken}/deleteWebhook`, {
+        method: "POST",
+      });
+    } catch (err) {
+      console.error("Failed to delete Telegram webhook:", err);
+    }
+  }
 
   // Clear token from DB
   await db

@@ -46,6 +46,15 @@ export async function GET() {
             .set({ status: "active", updatedAt: new Date() })
             .where(eq(tenants.id, tenant.id));
           tenantStatus = "active";
+
+          // Set Telegram webhook if token exists (fire-and-forget)
+          if (tenant.telegramBotToken) {
+            fetch(`https://api.telegram.org/bot${tenant.telegramBotToken}/setWebhook`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url: tenant.instanceUrl }),
+            }).catch(() => {});
+          }
         }
       } catch {
         // Service not ready yet — stay in "provisioning", client keeps polling

@@ -271,6 +271,9 @@ Setting `dmPolicy: "open"` without `allowFrom: ["*"]` crashes the gateway at sta
 ### OpenClaw WebSocket "Pairing Required" — Disable Device Auth for Docker/Proxy
 OpenClaw's device pairing system rejects WebSocket connections from non-localhost IPs (code 1008: "pairing required"). `allowInsecureAuth: true` only relaxes HTTPS requirements — it does NOT bypass device identity checks. For Docker/containerized deployments behind a proxy (Fly.io, Railway, etc.), you must set `controlUi.dangerouslyDisableDeviceAuth: true` in `openclaw.json`. The full `controlUi` config needed: `{ enabled: true, allowInsecureAuth: true, dangerouslyAllowHostHeaderOriginFallback: true, dangerouslyDisableDeviceAuth: true }`. Token auth (`auth.mode: "token"`) + `trustedProxies` are still required.
 
+### Telegram Webhook Required for Auto-Wake on Suspend
+Fly machines with `autostop: "suspend"` only wake on incoming HTTP requests. OpenClaw's Telegram long-polling drops when the machine suspends, and no new HTTP traffic arrives to trigger autostart. Fix: call Telegram `setWebhook` API pointing to the Fly instance URL. Telegram sends HTTP POSTs per message → triggers Fly autostart. Webhook is set in the Telegram POST handler (after token injection), cleaned up in DELETE handler, and also set on `provisioning → active` promotion in the status route.
+
 ### OpenClaw Model Config Must Be in `openclaw.json`, Not Env Vars
 `OPENCLAW_DEFAULT_MODEL` and `OPENCLAW_PRIMARY_MODEL` are not valid OpenClaw env vars. The default model must be set in `openclaw.json` under `agents.defaults.model.primary`. API keys (`OPENROUTER_API_KEY`, `ANTHROPIC_API_KEY`, etc.) *are* read from env vars.
 
