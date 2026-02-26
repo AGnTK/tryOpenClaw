@@ -1,14 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const posthog = usePostHog();
   const tracked = useRef(false);
   const [status, setStatus] = useState<"polling" | "ready">("polling");
+
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id") || "";
+    if (typeof window !== "undefined" && typeof window.gtag === "function") {
+      window.gtag("event", "conversion", {
+        send_to: "AW-11496747252/TktnCJrF2_0bEPThieoq",
+        transaction_id: sessionId,
+      });
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,5 +109,13 @@ export default function CheckoutSuccessPage() {
 
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense>
+      <CheckoutSuccessContent />
+    </Suspense>
   );
 }

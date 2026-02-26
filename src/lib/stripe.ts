@@ -33,7 +33,7 @@ export async function createCheckoutSession(
     mode: "subscription",
     customer_email: customerEmail,
     line_items: [{ price: getPriceId(plan), quantity: 1 }],
-    success_url: `${env("NEXT_PUBLIC_APP_URL")}/checkout/success`,
+    success_url: `${env("NEXT_PUBLIC_APP_URL")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${env("NEXT_PUBLIC_APP_URL")}/checkout/cancel`,
     metadata: { userId, plan },
   });
