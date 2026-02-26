@@ -113,31 +113,59 @@ export function InstanceStatus() {
     }
   }
 
+  // Auto-open dashboard when status transitions from provisioning → active
+  const prevStatus = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      prevStatus.current === "provisioning" &&
+      data?.tenantStatus === "active" &&
+      data.instanceUrl
+    ) {
+      const url = data.gatewayToken
+        ? `${data.instanceUrl}?token=${data.gatewayToken}`
+        : data.instanceUrl;
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+    // Clear launching spinner when status moves past "paid" (provisioning started)
+    // or lands on "active" (provisioning complete)
+    if (data?.tenantStatus && data.tenantStatus !== "paid" && launching) {
+      // Keep launching=true while provisioning so spinner shows,
+      // but clear it once we reach active/cancelled/etc.
+      if (data.tenantStatus !== "provisioning") {
+        if (progressInterval.current) clearInterval(progressInterval.current);
+        setLaunching(false);
+      }
+    }
+    if (data?.tenantStatus) {
+      prevStatus.current = data.tenantStatus;
+    }
+  }, [data?.tenantStatus, data?.instanceUrl, data?.gatewayToken, launching]);
+
   async function handleLaunch() {
     setLaunching(true);
     setLaunchError(null);
     setProgressStep(0);
 
-    // Cycle through progress messages every 2.5 minutes
+    // Cycle through progress messages every 20s
     progressInterval.current = setInterval(() => {
       setProgressStep((prev) => Math.min(prev + 1, PROGRESS_STEPS.length - 1));
-    }, 150000);
+    }, 20_000);
 
     try {
       const res = await fetch("/api/instance/provision", { method: "POST" });
       const body = await res.json();
       if (!res.ok) {
         setLaunchError(body.error || "Provisioning failed");
+        if (progressInterval.current) clearInterval(progressInterval.current);
+        setLaunching(false);
       } else {
-        const url = body.gatewayToken
-          ? `${body.instanceUrl}?token=${body.gatewayToken}`
-          : body.instanceUrl;
-        if (url) window.open(url, "_blank", "noopener,noreferrer");
+        // Provision route returns immediately with "provisioning" status.
+        // The 10s status poll will detect when the service is ready and
+        // auto-promote to "active". Keep showing the spinner UI.
         fetchStatus();
       }
     } catch {
       setLaunchError("Network error. Please try again.");
-    } finally {
       if (progressInterval.current) clearInterval(progressInterval.current);
       setLaunching(false);
     }
@@ -278,7 +306,7 @@ export function InstanceStatus() {
               {isRunning
                 ? "Your OpenClaw instance is running. Open the dashboard to configure AI models, connect channels, and manage your assistant."
                 : isSleeping
-                ? "Your instance is sleeping to save resources. It will wake automatically on the next request (30-60s cold start)."
+                ? "Your instance is sleeping to save resources. It will wake automatically on the next request (a few seconds)."
                 : "Manage your AI assistant — configure models, channels, guardrails, and more."}
             </p>
             <a
@@ -293,7 +321,7 @@ export function InstanceStatus() {
             </a>
             {isSleeping && (
               <p className="mt-3 text-xs text-muted-foreground">
-                Opening the dashboard will wake your instance. First load may take 30-60 seconds.
+                Opening the dashboard will wake your instance. First load may take a few seconds.
               </p>
             )}
           </CardContent>

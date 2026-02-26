@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-
-// Vercel Pro: up to 300s, Hobby: up to 60s. Provisioning needs ~2-3 min for cold boot.
-export const maxDuration = 300;
-
 import { getUser } from "@/lib/supabase-server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-import { createApp, allocateIpAddresses, createVolume, createMachine, waitForMachineReady, waitForServiceReady, destroyApp } from "@/lib/fly";
+import { createApp, allocateIpAddresses, createVolume, createMachine, destroyApp } from "@/lib/fly";
 import crypto from "crypto";
+
+// Async provisioning: create Fly resources and return immediately.
+// The status route polls Fly and auto-promotes to "active" when ready.
+// This avoids Vercel function timeout (10s Hobby, 60s Pro) killing long provisions.
 
 export async function POST() {
   const user = await getUser();
@@ -47,7 +47,7 @@ export async function POST() {
     })
     .where(eq(tenants.id, tenant.id));
 
-  // Provision Fly.io instance
+  // Provision Fly.io instance — create resources then return immediately
   try {
     await createApp(appName);
     await allocateIpAddresses(appName);
@@ -83,7 +83,7 @@ export async function POST() {
       region
     );
 
-    // Persist machine details immediately so they're never lost
+    // Persist machine details — status route will poll and promote to "active"
     await db
       .update(tenants)
       .set({
@@ -93,24 +93,7 @@ export async function POST() {
       })
       .where(eq(tenants.id, tenant.id));
 
-    // Wait for the machine to reach "started" state (90s — image pull + boot)
-    const machineReady = await waitForMachineReady(appName, machineId, 90_000);
-    if (!machineReady) {
-      throw new Error("Machine failed to start within timeout");
-    }
-
-    // Wait for the HTTP service to accept connections (180s — OpenClaw gateway init)
-    const serviceReady = await waitForServiceReady(instanceUrl, 180_000);
-    if (!serviceReady) {
-      throw new Error("Service not reachable within timeout");
-    }
-
-    await db
-      .update(tenants)
-      .set({ status: "active", updatedAt: new Date() })
-      .where(eq(tenants.id, tenant.id));
-
-    return NextResponse.json({ status: "active", instanceUrl, gatewayToken });
+    return NextResponse.json({ status: "provisioning", instanceUrl });
   } catch (err) {
     console.error(`Provisioning failed for ${appName}:`, err);
     // Clean up orphaned Fly app so retries start fresh

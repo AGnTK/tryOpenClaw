@@ -276,5 +276,11 @@ Stripe price IDs are mode-specific. A price ID from live mode (`price_...`) will
 ### Stripe Webhook Secret: Local vs Production
 `stripe listen` generates a temporary webhook signing secret that only works locally. For production (Vercel), you must create a webhook endpoint in the Stripe Dashboard (Developers → Webhooks) pointing to `{PRODUCTION_URL}/api/webhooks/stripe` and use THAT endpoint's signing secret as `STRIPE_WEBHOOK_SECRET`.
 
+### Vercel Serverless Function Timeout Kills Long Operations
+Vercel Hobby plan has a 10s function timeout (Pro: 60s, even with `maxDuration`). Any API route that does blocking I/O (polling loops, waiting for external services) will be killed mid-execution. The `catch` block may or may not run, leading to orphaned resources. **Pattern: return immediately from the API route, then let the client poll a status endpoint.** The provision route follows this pattern — it creates Fly resources and returns `"provisioning"`, then the status route auto-promotes to `"active"` when the service is reachable.
+
+### Provisioning is Async (Provision Route + Status Route)
+The provision route (`POST /api/instance/provision`) creates the Fly app/IPs/volume/machine and returns immediately with `status: "provisioning"`. It does NOT wait for the machine to boot or the service to respond. The status route (`GET /api/instance/status`) checks if the tenant is `"provisioning"` + machine is `"started"` + HTTP service responds `< 500`, then auto-promotes to `"active"`. The client polls status every 10s and auto-opens the dashboard on transition. **Never add blocking waits back to the provision route** — Vercel will kill it.
+
 ### Vercel Deploys: Push to Branch ≠ Production Deploy
 Pushing to `aryav` creates a **Preview** deployment on Vercel, not Production. The production domain (`tryopenclaw.vercel.app`) only updates from Production deploys. Use `vercel --prod` to force a production deployment, or configure the branch as the production branch in Vercel Dashboard → Settings → Git.

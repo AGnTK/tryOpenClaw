@@ -29,8 +29,29 @@ export async function GET() {
 
   try {
     const machine = await getMachineStatus(tenant.flyAppName, tenant.flyMachineId);
+
+    // Auto-promote: if tenant is "provisioning" and machine is started,
+    // check if the HTTP service is reachable, then mark "active".
+    // This handles async provisioning — the provision route returns immediately
+    // and this status poll completes the transition.
+    let tenantStatus = tenant.status;
+    if (tenant.status === "provisioning" && machine.state === "started" && tenant.instanceUrl) {
+      try {
+        const probe = await fetch(tenant.instanceUrl, { signal: AbortSignal.timeout(5000) });
+        if (probe.status < 500) {
+          await db
+            .update(tenants)
+            .set({ status: "active", updatedAt: new Date() })
+            .where(eq(tenants.id, tenant.id));
+          tenantStatus = "active";
+        }
+      } catch {
+        // Service not ready yet — stay in "provisioning", client keeps polling
+      }
+    }
+
     return NextResponse.json({
-      tenantStatus: tenant.status,
+      tenantStatus,
       machineState: machine.state,
       instanceUrl: tenant.instanceUrl,
       gatewayToken: tenant.gatewayToken,

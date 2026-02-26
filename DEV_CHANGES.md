@@ -168,6 +168,13 @@ Changes on `aryav` branch since last merge to `main`. Clear after each merge (ke
 - **New files**: `src/app/api/instance/channels/telegram/route.ts`
 - **Modified files**: `src/lib/schema.ts`, `src/lib/fly.ts`, `src/app/api/instance/provision/route.ts`, `src/components/dashboard/integrations-section.tsx`
 
+### Async Provisioning (Fix Vercel Timeout)
+- **Problem**: Provision route waited for machine boot + service readiness (2-3 min). Vercel Hobby plan kills functions at 10s, destroying the Fly app mid-provision
+- **Fix**: Provision route now creates Fly resources and returns immediately with `"provisioning"`. Status route (`GET /api/instance/status`) auto-promotes to `"active"` when machine is started + HTTP service responds `< 500`
+- **Client**: Polls every 10s, shows provisioning spinner, auto-opens dashboard on `"active"` transition
+- **Removed**: `waitForMachineReady()` and `waitForServiceReady()` imports from provision route
+- **Files changed**: `src/app/api/instance/provision/route.ts`, `src/app/api/instance/status/route.ts`, `src/components/dashboard/instance-status.tsx`
+
 ### Fly Machine Config Improvements (3 Changes)
 - **`autostop: "suspend"`**: Changed from `"stop"` to `"suspend"` in `createMachine()`. Machines suspend to memory instead of shutting down — resume in ~1-3s vs ~10-30s cold boot. Suspended machines still incur reduced memory billing
 - **Channel schemas enabled**: Added `channels` block to `openclaw.json` config with `{ enabled: true }` for 8 channels (Telegram, WhatsApp, Discord, IRC, Google Chat, Slack, Signal, iMessage). Fixes "Channel config schema unavailable" in OpenClaw dashboard
