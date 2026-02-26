@@ -27,12 +27,15 @@ function getPriceId(plan: string): string {
 export async function createCheckoutSession(
   customerEmail: string,
   plan: string,
-  userId: string
+  userId: string,
+  firstTime: boolean = false
 ): Promise<string> {
+  const promoId = "promo_1T43vLSIzJkYmjrZN22cvGZu";
   const session = await getStripe().checkout.sessions.create({
     mode: "subscription",
     customer_email: customerEmail,
     line_items: [{ price: getPriceId(plan), quantity: 1 }],
+    ...(firstTime ? { discounts: [{ promotion_code: promoId }] } : {}),
     success_url: `${env("NEXT_PUBLIC_APP_URL")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${env("NEXT_PUBLIC_APP_URL")}/checkout/cancel`,
     metadata: { userId, plan },
@@ -41,12 +44,6 @@ export async function createCheckoutSession(
   return session.url!;
 }
 
-export function getFirstTimeCheckoutUrl(userId: string, email: string): string {
-  const base = env("STRIPE_FIRST_TIME_LINK");
-  if (!base) throw new Error("STRIPE_FIRST_TIME_LINK env var not set");
-  const sep = base.includes("?") ? "&" : "?";
-  return `${base}${sep}client_reference_id=${encodeURIComponent(userId)}&prefilled_email=${encodeURIComponent(email)}`;
-}
 
 export async function createPortalSession(customerId: string): Promise<string> {
   const session = await getStripe().billingPortal.sessions.create({

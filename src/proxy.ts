@@ -31,8 +31,12 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Protect dashboard and checkout routes
-  if ((pathname.startsWith("/dashboard") || pathname.startsWith("/checkout")) && !user) {
+  // Protect dashboard + checkout, but allow Stripe return pages without auth.
+  const isProtected =
+    (pathname.startsWith("/dashboard") || pathname.startsWith("/checkout")) &&
+    !pathname.startsWith("/checkout/success") &&
+    !pathname.startsWith("/checkout/cancel");
+  if (isProtected && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

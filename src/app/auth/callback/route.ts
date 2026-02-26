@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq } from "drizzle-orm";
-import { createCheckoutSession, getFirstTimeCheckoutUrl } from "@/lib/stripe";
+import { createCheckoutSession } from "@/lib/stripe";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
@@ -55,13 +55,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (!existing) {
-      // First-time user — discounted Payment Link
+      // First-time user — Stripe Checkout Session with first-time promo
       try {
-        const paymentLinkUrl = getFirstTimeCheckoutUrl(user.id, user.email!);
-        console.log("[callback] First-time user, Payment Link redirect:", user.id);
-        return NextResponse.redirect(paymentLinkUrl);
+        const checkoutUrl = await createCheckoutSession(user.email!, "pro", user.id, true);
+        console.log("[callback] First-time user, Checkout Session redirect:", user.id);
+        return NextResponse.redirect(checkoutUrl);
       } catch (err) {
-        console.error("[callback] Payment Link URL failed:", err);
+        console.error("[callback] Checkout session failed:", err);
         return NextResponse.redirect(`${origin}/checkout/cancel?error=checkout_failed`);
       }
     }
