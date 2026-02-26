@@ -60,24 +60,50 @@ async function handleCheckoutCompleted(event: Stripe.Event) {
   const plan = session.metadata?.plan || "pro";
   if (!userId) return;
 
-  // Create tenant record — user must manually launch their instance from the dashboard
-  const [tenant] = await db
-    .insert(tenants)
-    .values({
-      userId,
-      email: session.customer_email || "",
-      plan,
-      status: "paid",
-      stripeCustomerId: session.customer as string,
-      stripeSubscriptionId: session.subscription as string,
-    })
-    .returning();
+  const email = session.customer_email || "";
+  const stripeCustomerId = session.customer as string;
+  const stripeSubscriptionId = session.subscription as string;
+
+  // Upsert tenant — update if exists (returning user), insert if new
+  const existing = await db.query.tenants.findFirst({
+    where: eq(tenants.userId, userId),
+  });
+
+  let tenantId: string;
+
+  if (existing) {
+    await db
+      .update(tenants)
+      .set({
+        ...(email ? { email } : {}),
+        plan,
+        status: "paid",
+        stripeCustomerId,
+        stripeSubscriptionId,
+        updatedAt: new Date(),
+      })
+      .where(eq(tenants.id, existing.id));
+    tenantId = existing.id;
+  } else {
+    const [tenant] = await db
+      .insert(tenants)
+      .values({
+        userId,
+        email,
+        plan,
+        status: "paid",
+        stripeCustomerId,
+        stripeSubscriptionId,
+      })
+      .returning();
+    tenantId = tenant.id;
+  }
 
   // Log billing event
   await db.insert(billingEvents).values({
     stripeEventId: event.id,
     eventType: event.type,
-    tenantId: tenant.id,
+    tenantId,
   });
 }
 

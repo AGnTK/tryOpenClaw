@@ -6,7 +6,7 @@ function env(key: string): string {
   return (process.env[key] || "").trim();
 }
 
-function getStripe(): Stripe {
+export function getStripe(): Stripe {
   if (!_stripe) {
     _stripe = new Stripe(env("STRIPE_SECRET_KEY"));
   }

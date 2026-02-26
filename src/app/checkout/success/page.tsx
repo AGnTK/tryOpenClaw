@@ -23,20 +23,30 @@ function CheckoutSuccessContent() {
 
   useEffect(() => {
     let cancelled = false;
+    const sessionId = searchParams.get("session_id") || "";
 
     async function poll() {
+      if (!sessionId) {
+        // No session_id — go straight to dashboard
+        router.push("/dashboard");
+        return;
+      }
+
       while (!cancelled) {
         try {
-          const res = await fetch("/api/instance/status");
+          const res = await fetch(`/api/billing/confirm?session_id=${encodeURIComponent(sessionId)}`);
           if (res.ok) {
-            if (!tracked.current) {
-              posthog?.capture("checkout_completed");
-              tracked.current = true;
+            const data = await res.json();
+            if (data.ready) {
+              if (!tracked.current) {
+                posthog?.capture("checkout_completed");
+                tracked.current = true;
+              }
+              setStatus("ready");
+              await new Promise((r) => setTimeout(r, 1200));
+              if (!cancelled) router.push("/dashboard");
+              return;
             }
-            setStatus("ready");
-            await new Promise((r) => setTimeout(r, 1500));
-            if (!cancelled) router.push("/dashboard");
-            return;
           }
         } catch {
           // Ignore, keep polling
@@ -47,7 +57,7 @@ function CheckoutSuccessContent() {
 
     poll();
     return () => { cancelled = true; };
-  }, [router]);
+  }, [router, searchParams]);
 
   return (
     <div style={{
