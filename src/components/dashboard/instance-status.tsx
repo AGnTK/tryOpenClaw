@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { usePostHog } from "posthog-js/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +48,7 @@ const PROGRESS_STEPS = [
 ];
 
 export function InstanceStatus() {
+  const posthog = usePostHog();
   const [data, setData] = useState<InstanceData | null>(null);
   const [loading, setLoading] = useState(true);
   const [restarting, setRestarting] = useState(false);
@@ -77,6 +79,7 @@ export function InstanceStatus() {
 
   async function handleRestart() {
     setRestarting(true);
+    posthog?.capture("instance_restarted", { machine_state: data?.machineState });
     try {
       await fetch("/api/instance/restart", { method: "POST" });
       setTimeout(fetchStatus, 3000);
@@ -87,6 +90,7 @@ export function InstanceStatus() {
 
   async function handleStart() {
     setStarting(true);
+    posthog?.capture("instance_started", { machine_state: data?.machineState });
     try {
       await fetch("/api/instance/start", { method: "POST" });
       setTimeout(fetchStatus, 3000);
@@ -97,6 +101,7 @@ export function InstanceStatus() {
 
   async function handleStop() {
     setStopping(true);
+    posthog?.capture("instance_stopped", { machine_state: data?.machineState });
     try {
       await fetch("/api/instance/stop", { method: "POST" });
       setTimeout(fetchStatus, 3000);
@@ -109,6 +114,7 @@ export function InstanceStatus() {
     if (data?.instanceUrl) {
       navigator.clipboard.writeText(data.instanceUrl);
       setCopied(true);
+      posthog?.capture("instance_url_copied");
       setTimeout(() => setCopied(false), 2000);
     }
   }
@@ -124,6 +130,7 @@ export function InstanceStatus() {
       const url = data.gatewayToken
         ? `${data.instanceUrl}?token=${data.gatewayToken}`
         : data.instanceUrl;
+      posthog?.capture("instance_active");
       window.open(url, "_blank", "noopener,noreferrer");
     }
     // Clear launching spinner when status moves past "paid" (provisioning started)
@@ -142,6 +149,7 @@ export function InstanceStatus() {
   }, [data?.tenantStatus, data?.instanceUrl, data?.gatewayToken, launching]);
 
   async function handleLaunch() {
+    posthog?.capture("instance_launch_clicked", { plan: data?.plan });
     setLaunching(true);
     setLaunchError(null);
     setProgressStep(0);
@@ -313,6 +321,7 @@ export function InstanceStatus() {
               href={dashboardUrl || "#"}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => posthog?.capture("instance_dashboard_opened", { instance_url: data.instanceUrl })}
             >
               <Button size="lg" className="w-full gap-2 px-8 text-base sm:w-auto">
                 <ExternalLink className="h-5 w-5" />

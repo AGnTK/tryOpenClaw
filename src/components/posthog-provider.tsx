@@ -14,6 +14,7 @@ export default function PHProvider({ children }: { children: React.ReactNode }) 
       api_host: host,
       capture_pageview: true,
       capture_pageleave: true,
+      capture_exceptions: true,
     });
   }, []);
 

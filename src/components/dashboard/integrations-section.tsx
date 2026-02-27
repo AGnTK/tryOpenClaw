@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { usePostHog } from "posthog-js/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,9 +15,11 @@ type TelegramStatus = {
 function TelegramModal({
   onClose,
   onSaved,
+  onFailed,
 }: {
   onClose: () => void;
   onSaved: (botUsername: string) => void;
+  onFailed?: (error: string) => void;
 }) {
   const [token, setToken] = useState("");
   const [saving, setSaving] = useState(false);
@@ -39,13 +42,16 @@ function TelegramModal({
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to save");
+        const msg = data.error || "Failed to save";
+        setError(msg);
+        onFailed?.(msg);
         return;
       }
 
       onSaved(data.botUsername || "");
     } catch {
       setError("Network error. Please try again.");
+      onFailed?.("Network error");
     } finally {
       setSaving(false);
     }
@@ -117,6 +123,7 @@ function TelegramModal({
 }
 
 export function IntegrationsSection() {
+  const posthog = usePostHog();
   const [status, setStatus] = useState<TelegramStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -146,6 +153,7 @@ export function IntegrationsSection() {
     try {
       const res = await fetch("/api/instance/channels/telegram", { method: "DELETE" });
       if (res.ok) {
+        posthog?.capture("telegram_disconnected", { bot_username: status?.botUsername });
         setStatus({ configured: false });
       }
     } catch {
@@ -156,8 +164,14 @@ export function IntegrationsSection() {
   }
 
   function handleSaved(botUsername: string) {
+    posthog?.capture("telegram_configured", { bot_username: botUsername });
     setStatus({ configured: true, botUsername });
     setShowModal(false);
+  }
+
+  function handleOpenModal() {
+    posthog?.capture("telegram_configure_started");
+    setShowModal(true);
   }
 
   return (
@@ -199,7 +213,7 @@ export function IntegrationsSection() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowModal(true)}
+                  onClick={handleOpenModal}
                 >
                   Reconfigure
                 </Button>
@@ -221,7 +235,7 @@ export function IntegrationsSection() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowModal(true)}
+                onClick={handleOpenModal}
                 disabled={loading}
               >
                 Configure
@@ -235,6 +249,7 @@ export function IntegrationsSection() {
         <TelegramModal
           onClose={() => setShowModal(false)}
           onSaved={handleSaved}
+          onFailed={(error) => posthog?.capture("telegram_config_failed", { error })}
         />
       )}
     </Card>

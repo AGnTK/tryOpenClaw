@@ -38,7 +38,7 @@ function CheckoutSuccessContent() {
 
     function trackConfirmedSuccess() {
       if (!trackedPosthog.current) {
-        posthog?.capture("checkout_completed");
+        posthog?.capture("checkout_completed", { session_id: sessionId });
         trackedPosthog.current = true;
       }
 

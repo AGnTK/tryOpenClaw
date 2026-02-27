@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { tenants, billingEvents } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { stopMachine, updateMachineSize } from "@/lib/fly";
+import { getPostHogServer } from "@/lib/posthog-server";
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -105,6 +106,17 @@ async function handleCheckoutCompleted(event: Stripe.Event) {
     eventType: event.type,
     tenantId,
   });
+
+  getPostHogServer()?.capture({
+    distinctId: userId,
+    event: "subscription_created",
+    properties: {
+      plan,
+      email,
+      stripe_customer_id: stripeCustomerId,
+      first_time: !existing,
+    },
+  });
 }
 
 async function handleSubscriptionDeleted(event: Stripe.Event) {
@@ -133,6 +145,19 @@ async function handleSubscriptionDeleted(event: Stripe.Event) {
     .update(tenants)
     .set({ status: "cancelled", updatedAt: new Date() })
     .where(eq(tenants.id, tenant.id));
+
+  const lifetimeDays = tenant.createdAt
+    ? Math.floor((Date.now() - new Date(tenant.createdAt).getTime()) / 86400000)
+    : undefined;
+
+  getPostHogServer()?.capture({
+    distinctId: tenant.userId,
+    event: "subscription_cancelled",
+    properties: {
+      plan: tenant.plan,
+      lifetime_days: lifetimeDays,
+    },
+  });
 }
 
 async function handleSubscriptionUpdated(event: Stripe.Event) {
@@ -168,6 +193,17 @@ async function handleSubscriptionUpdated(event: Stripe.Event) {
     .update(tenants)
     .set({ plan: newPlan, updatedAt: new Date() })
     .where(eq(tenants.id, tenant.id));
+
+  if (newPlan !== tenant.plan) {
+    getPostHogServer()?.capture({
+      distinctId: tenant.userId,
+      event: "subscription_updated",
+      properties: {
+        old_plan: tenant.plan,
+        new_plan: newPlan,
+      },
+    });
+  }
 }
 
 async function handlePaymentFailed(event: Stripe.Event) {
@@ -193,4 +229,10 @@ async function handlePaymentFailed(event: Stripe.Event) {
     .update(tenants)
     .set({ status: "suspended", updatedAt: new Date() })
     .where(eq(tenants.id, tenant.id));
+
+  getPostHogServer()?.capture({
+    distinctId: tenant.userId,
+    event: "payment_failed",
+    properties: { plan: tenant.plan },
+  });
 }

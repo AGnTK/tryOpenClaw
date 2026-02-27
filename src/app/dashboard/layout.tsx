@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/supabase-server";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { PostHogIdentify } from "@/components/posthog-identify";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
@@ -52,6 +53,11 @@ export default async function DashboardLayout({
 
   return (
     <DashboardShell email={user.email || ""}>
+      <PostHogIdentify
+        userId={user.id}
+        email={user.email || ""}
+        plan={tenant.plan}
+      />
       {children}
     </DashboardShell>
   );

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
 import { createApp, allocateIpAddresses, createVolume, deleteVolume, createMachine, destroyApp } from "@/lib/fly";
+import { getPostHogServer } from "@/lib/posthog-server";
 import crypto from "crypto";
 
 // Async provisioning: create Fly resources and return immediately.
@@ -107,6 +108,12 @@ export async function POST() {
           })
           .where(eq(tenants.id, tenant.id));
 
+        getPostHogServer()?.capture({
+          distinctId: user.id,
+          event: "instance_provision_completed",
+          properties: { app_name: appName, region, plan: tenant.plan, machine_id: machineId },
+        });
+
         return NextResponse.json({ status: "provisioning", instanceUrl });
       } catch (err) {
         lastErr = err;
@@ -117,6 +124,16 @@ export async function POST() {
         }
         // Only retry on capacity errors — other errors are not region-specific
         if (!isCapacityError(err)) break;
+
+        // Log region fallback for capacity errors
+        const nextRegion = REGIONS[REGIONS.indexOf(region) + 1];
+        if (nextRegion) {
+          getPostHogServer()?.capture({
+            distinctId: user.id,
+            event: "instance_region_fallback",
+            properties: { failed_region: region, next_region: nextRegion },
+          });
+        }
       }
     }
 
@@ -137,6 +154,13 @@ export async function POST() {
       })
       .where(eq(tenants.id, tenant.id));
     const errMsg = err instanceof Error ? err.message : "Unknown error";
+
+    getPostHogServer()?.capture({
+      distinctId: user.id,
+      event: "instance_provision_failed",
+      properties: { error_message: errMsg, app_name: appName },
+    });
+
     return NextResponse.json({ error: `Provisioning failed: ${errMsg}` }, { status: 500 });
   }
 }
