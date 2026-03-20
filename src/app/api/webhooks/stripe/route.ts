@@ -111,10 +111,13 @@ async function handleCheckoutCompleted(event: Stripe.Event) {
     distinctId: userId,
     event: "subscription_created",
     properties: {
+      user_id: userId,
       plan,
       email,
       stripe_customer_id: stripeCustomerId,
-      first_time: !existing,
+      stripe_subscription_id: stripeSubscriptionId,
+      stripe_checkout_session_id: session.id,
+      first_time: session.metadata?.first_time === "true" || !existing,
     },
   });
 }

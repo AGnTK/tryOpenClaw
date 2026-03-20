@@ -36,12 +36,18 @@ function CheckoutSuccessContent() {
     let authFailures = 0;
     let transientFailures = 0;
 
+    // Client-side tracking for UX diagnostics and Google Ads attribution.
+    // NOTE: This is NOT the canonical paid conversion for PostHog funnel analysis.
+    // Use webhook-backed "subscription_created" event as the source of truth for revenue.
+    // The gtag conversion here is for Google Ads click attribution (requires client-side gclid).
     function trackConfirmedSuccess() {
+      // PostHog: UX diagnostic only - tracks that user landed on success page
       if (!trackedPosthog.current) {
-        posthog?.capture("checkout_completed", { session_id: sessionId });
+        posthog?.capture("checkout_success_page_loaded", { session_id: sessionId });
         trackedPosthog.current = true;
       }
 
+      // Google Ads: Conversion for ad attribution (intentionally client-side for gclid)
       if (
         !trackedGtag.current &&
         sessionId &&

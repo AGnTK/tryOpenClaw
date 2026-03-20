@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { getPostHogServer } from "@/lib/posthog-server";
 
 let _stripe: Stripe | null = null;
 
@@ -29,7 +30,7 @@ export async function createCheckoutSession(
   plan: string,
   userId: string,
   firstTime: boolean = false
-): Promise<string> {
+): Promise<{ url: string; sessionId: string }> {
   const promoId = "promo_1T43vLSIzJkYmjrZN22cvGZu";
   const session = await getStripe().checkout.sessions.create({
     mode: "subscription",
@@ -38,10 +39,22 @@ export async function createCheckoutSession(
     ...(firstTime ? { discounts: [{ promotion_code: promoId }] } : {}),
     success_url: `${env("NEXT_PUBLIC_APP_URL")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${env("NEXT_PUBLIC_APP_URL")}/checkout/cancel`,
-    metadata: { userId, plan },
+    metadata: { userId, plan, first_time: String(firstTime) },
   });
 
-  return session.url!;
+  // Track checkout_started event - canonical funnel step
+  getPostHogServer()?.capture({
+    distinctId: userId,
+    event: "checkout_started",
+    properties: {
+      user_id: userId,
+      plan,
+      stripe_checkout_session_id: session.id,
+      first_time: firstTime,
+    },
+  });
+
+  return { url: session.url!, sessionId: session.id };
 }
 
 

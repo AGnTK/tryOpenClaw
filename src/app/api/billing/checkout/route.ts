@@ -31,13 +31,13 @@ export async function POST(request: NextRequest) {
 
   try {
     console.log("[checkout] Creating session for plan:", plan);
-    const checkoutUrl = await createCheckoutSession(
+    const { url } = await createCheckoutSession(
       user.email!,
       plan,
       user.id
     );
-    console.log("[checkout] Success, URL:", checkoutUrl);
-    return NextResponse.json({ url: checkoutUrl });
+    console.log("[checkout] Success, URL:", url);
+    return NextResponse.json({ url });
   } catch (err) {
     console.error("[checkout] Stripe error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";

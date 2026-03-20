@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { createCheckoutSession } from "@/lib/stripe";
+import { getPostHogServer } from "@/lib/posthog-server";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
@@ -50,16 +51,28 @@ export async function GET(request: NextRequest) {
     });
 
     if (existing && existing.status !== "cancelled") {
-      // Already subscribed — go to dashboard
+      // Already subscribed — go to dashboard (no funnel event)
       return NextResponse.redirect(`${origin}/dashboard`);
     }
 
-    if (!existing) {
+    // User is entering purchase flow — track funnel start
+    const isFirstTime = !existing;
+    getPostHogServer()?.capture({
+      distinctId: user.id,
+      event: "auth_completed",
+      properties: {
+        user_id: user.id,
+        email: user.email,
+        first_time: isFirstTime,
+      },
+    });
+
+    if (isFirstTime) {
       // First-time user — Stripe Checkout Session with first-time promo
       try {
-        const checkoutUrl = await createCheckoutSession(user.email!, "pro", user.id, true);
+        const { url } = await createCheckoutSession(user.email!, "pro", user.id, true);
         console.log("[callback] First-time user, Checkout Session redirect:", user.id);
-        return NextResponse.redirect(checkoutUrl);
+        return NextResponse.redirect(url);
       } catch (err) {
         console.error("[callback] Checkout session failed:", err);
         return NextResponse.redirect(`${origin}/checkout/cancel?error=checkout_failed`);
@@ -69,12 +82,12 @@ export async function GET(request: NextRequest) {
     // Cancelled user — regular Stripe Checkout
     try {
       console.log("[callback] Returning user checkout for:", user.id, user.email);
-      const checkoutUrl = await createCheckoutSession(
+      const { url } = await createCheckoutSession(
         user.email!,
         "pro",
         user.id
       );
-      return NextResponse.redirect(checkoutUrl);
+      return NextResponse.redirect(url);
     } catch (err) {
       console.error("[callback] Stripe checkout failed:", err);
       return NextResponse.redirect(`${origin}/checkout/cancel?error=checkout_failed`);

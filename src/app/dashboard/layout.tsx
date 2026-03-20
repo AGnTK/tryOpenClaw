@@ -28,7 +28,8 @@ export default async function DashboardLayout({
     // First-time user — Stripe Checkout Session with first-time promo
     let checkoutUrl: string | null = null;
     try {
-      checkoutUrl = await createCheckoutSession(user.email!, "pro", user.id, true);
+      const result = await createCheckoutSession(user.email!, "pro", user.id, true);
+      checkoutUrl = result.url;
     } catch (err) {
       console.error("[dashboard] Checkout session failed:", err);
     }
@@ -40,7 +41,8 @@ export default async function DashboardLayout({
     // Returning user — regular Stripe Checkout
     let checkoutUrl: string | null = null;
     try {
-      checkoutUrl = await createCheckoutSession(user.email!, "pro", user.id);
+      const result = await createCheckoutSession(user.email!, "pro", user.id);
+      checkoutUrl = result.url;
     } catch (err) {
       console.error("[dashboard] Failed to create checkout:", err);
     }
