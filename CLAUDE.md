@@ -166,7 +166,7 @@ public/
 - **Docker image**: `ghcr.io/openclaw/openclaw:latest` (official GHCR image)
 - **Port**: 18789 (OpenClaw Gateway — serves web dashboard + WebSocket + API)
 - **Auth**: Token-based via `openclaw.json` config (`auth.mode: "token"`, `allowInsecureAuth: true`)
-- **Dashboard URL**: `{instanceUrl}?token={gatewayToken}` — token passed as URL param
+- **Dashboard URL**: `{instanceUrl}#token={gatewayToken}` — token passed as URL **fragment** (not query param). OpenClaw SPA reads `#token=`, stores in sessionStorage, strips from URL after load. Using `?token=` is silently ignored.
 - **Bind mode**: `--bind lan` CLI flag (0.0.0.0) — required for Fly.io proxy to reach the gateway
 - **User**: Runs as `node` (not root) — `HOME=/home/node`
 - **Memory**: Gateway needs ~800MB RSS at startup; minimum 2048MB VM with `--max-old-space-size=1536`
