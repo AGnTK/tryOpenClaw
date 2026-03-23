@@ -3,7 +3,7 @@ import { getUser } from "@/lib/supabase-server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/schema";
 import { eq, desc } from "drizzle-orm";
-import { restartMachine } from "@/lib/fly";
+import { stopMachine, startMachine } from "@/lib/fly";
 
 export async function POST() {
   const user = await getUser();
@@ -25,7 +25,10 @@ export async function POST() {
   }
 
   try {
-    await restartMachine(tenant.flyAppName, tenant.flyMachineId);
+    await stopMachine(tenant.flyAppName, tenant.flyMachineId);
+    // Brief pause before restart
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await startMachine(tenant.flyAppName, tenant.flyMachineId);
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Restart failed:", err);

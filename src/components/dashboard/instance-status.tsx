@@ -29,7 +29,6 @@ type InstanceData = {
 const STATUS_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" }> = {
   started: { label: "Running", variant: "success" },
   stopped: { label: "Sleeping", variant: "secondary" },
-  suspended: { label: "Suspended", variant: "warning" },
   starting: { label: "Starting", variant: "warning" },
   stopping: { label: "Stopping", variant: "warning" },
   created: { label: "Created", variant: "secondary" },
@@ -113,11 +112,7 @@ export function InstanceStatus() {
 
   function handleCopyUrl() {
     if (data?.instanceUrl) {
-      // Copy the tokenized URL so it works when pasted into a browser
-      const url = data.gatewayToken
-        ? `${data.instanceUrl}?token=${data.gatewayToken}`
-        : data.instanceUrl;
-      navigator.clipboard.writeText(url);
+      navigator.clipboard.writeText(data.instanceUrl);
       setCopied(true);
       posthog?.capture("instance_url_copied");
       setTimeout(() => setCopied(false), 2000);
@@ -294,7 +289,7 @@ export function InstanceStatus() {
     : { label: data.tenantStatus, variant: "secondary" as const };
 
   const isRunning = data.machineState === "started";
-  const isSleeping = data.machineState === "stopped" || data.machineState === "suspended";
+  const isSleeping = data.machineState === "stopped";
   const dashboardUrl = data.gatewayToken
     ? `${data.instanceUrl}?token=${data.gatewayToken}`
     : data.instanceUrl;
@@ -326,18 +321,13 @@ export function InstanceStatus() {
               href={dashboardUrl || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => posthog?.capture("instance_dashboard_opened", { instance_url: data.instanceUrl, has_token: !!data.gatewayToken })}
+              onClick={() => posthog?.capture("instance_dashboard_opened", { instance_url: data.instanceUrl })}
             >
               <Button size="lg" className="w-full gap-2 px-8 text-base sm:w-auto">
                 <ExternalLink className="h-5 w-5" />
                 Open Assistant Dashboard
               </Button>
             </a>
-            {!data.gatewayToken && (
-              <p className="mt-3 text-xs text-destructive">
-                Warning: Gateway token is missing. The dashboard may ask you to enter it manually.
-              </p>
-            )}
             {isSleeping && (
               <p className="mt-3 text-xs text-muted-foreground">
                 Opening the dashboard will wake your instance. First load may take a few seconds.

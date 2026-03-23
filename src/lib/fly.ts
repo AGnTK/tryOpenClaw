@@ -234,42 +234,15 @@ export async function getMachineStatus(
 }
 
 export async function startMachine(appName: string, machineId: string): Promise<void> {
-  // Read current config to check if autostart needs re-enabling
-  const res = await flyFetch(`/apps/${appName}/machines/${machineId}`);
-  const machine = await res.json();
-
-  const services: Array<Record<string, unknown>> = machine.config?.services || [];
-  const needsAutostartUpdate = services.some((s) => s.autostart === false);
-
-  if (needsAutostartUpdate) {
-    // autostart was disabled by a prior stopMachine call.
-    // Config POST re-enables autostart AND restarts the machine — no separate /start needed.
-    const updatedServices = services.map((s) => ({ ...s, autostart: true }));
-    await flyFetch(`/apps/${appName}/machines/${machineId}`, {
-      method: "POST",
-      body: JSON.stringify({ config: { ...machine.config, services: updatedServices } }),
-    });
-  } else {
-    // autostart is already enabled (e.g. machine auto-suspended by Fly).
-    // Just call /start for a fast resume from suspend (~1-3s) instead of cold boot.
-    await flyFetch(`/apps/${appName}/machines/${machineId}/start`, {
-      method: "POST",
-    });
-  }
+  await setAutostart(appName, machineId, true);
+  await flyFetch(`/apps/${appName}/machines/${machineId}/start`, {
+    method: "POST",
+  });
 }
 
 export async function stopMachine(appName: string, machineId: string): Promise<void> {
-  // First stop the machine, then disable autostart so incoming requests don't wake it.
-  await flyFetch(`/apps/${appName}/machines/${machineId}/stop`, {
-    method: "POST",
-  });
-  // Now that the machine is stopping/stopped, update config to disable autostart.
-  // This config POST won't cause a restart since the machine is already stopped.
   await setAutostart(appName, machineId, false);
-}
-
-export async function restartMachine(appName: string, machineId: string): Promise<void> {
-  await flyFetch(`/apps/${appName}/machines/${machineId}/restart`, {
+  await flyFetch(`/apps/${appName}/machines/${machineId}/stop`, {
     method: "POST",
   });
 }
