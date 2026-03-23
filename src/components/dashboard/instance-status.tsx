@@ -113,7 +113,11 @@ export function InstanceStatus() {
 
   function handleCopyUrl() {
     if (data?.instanceUrl) {
-      navigator.clipboard.writeText(data.instanceUrl);
+      // Copy the tokenized URL so it works when pasted into a browser
+      const url = data.gatewayToken
+        ? `${data.instanceUrl}?token=${data.gatewayToken}`
+        : data.instanceUrl;
+      navigator.clipboard.writeText(url);
       setCopied(true);
       posthog?.capture("instance_url_copied");
       setTimeout(() => setCopied(false), 2000);
@@ -322,13 +326,18 @@ export function InstanceStatus() {
               href={dashboardUrl || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => posthog?.capture("instance_dashboard_opened", { instance_url: data.instanceUrl })}
+              onClick={() => posthog?.capture("instance_dashboard_opened", { instance_url: data.instanceUrl, has_token: !!data.gatewayToken })}
             >
               <Button size="lg" className="w-full gap-2 px-8 text-base sm:w-auto">
                 <ExternalLink className="h-5 w-5" />
                 Open Assistant Dashboard
               </Button>
             </a>
+            {!data.gatewayToken && (
+              <p className="mt-3 text-xs text-destructive">
+                Warning: Gateway token is missing. The dashboard may ask you to enter it manually.
+              </p>
+            )}
             {isSleeping && (
               <p className="mt-3 text-xs text-muted-foreground">
                 Opening the dashboard will wake your instance. First load may take a few seconds.
