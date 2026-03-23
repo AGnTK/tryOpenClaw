@@ -29,6 +29,7 @@ type InstanceData = {
 const STATUS_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" | "success" | "warning" }> = {
   started: { label: "Running", variant: "success" },
   stopped: { label: "Sleeping", variant: "secondary" },
+  suspended: { label: "Suspended", variant: "warning" },
   starting: { label: "Starting", variant: "warning" },
   stopping: { label: "Stopping", variant: "warning" },
   created: { label: "Created", variant: "secondary" },
@@ -289,7 +290,7 @@ export function InstanceStatus() {
     : { label: data.tenantStatus, variant: "secondary" as const };
 
   const isRunning = data.machineState === "started";
-  const isSleeping = data.machineState === "stopped";
+  const isSleeping = data.machineState === "stopped" || data.machineState === "suspended";
   const dashboardUrl = data.gatewayToken
     ? `${data.instanceUrl}#token=${data.gatewayToken}`
     : data.instanceUrl;
