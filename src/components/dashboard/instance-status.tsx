@@ -64,14 +64,7 @@ export function InstanceStatus() {
     try {
       const res = await fetch("/api/instance/status");
       if (res.ok) {
-        const json = await res.json();
-        console.log("[InstanceStatus] API response:", {
-          tenantStatus: json.tenantStatus,
-          machineState: json.machineState,
-          hasToken: !!json.gatewayToken,
-          tokenPreview: json.gatewayToken?.substring(0, 8) || "NULL",
-        });
-        setData(json);
+        setData(await res.json());
       }
     } finally {
       setLoading(false);
@@ -135,7 +128,7 @@ export function InstanceStatus() {
       data.instanceUrl
     ) {
       const url = data.gatewayToken
-        ? `${data.instanceUrl}?token=${data.gatewayToken}`
+        ? `${data.instanceUrl}#token=${data.gatewayToken}`
         : data.instanceUrl;
       posthog?.capture("instance_active");
       window.open(url, "_blank", "noopener,noreferrer");
@@ -298,7 +291,7 @@ export function InstanceStatus() {
   const isRunning = data.machineState === "started";
   const isSleeping = data.machineState === "stopped";
   const dashboardUrl = data.gatewayToken
-    ? `${data.instanceUrl}?token=${data.gatewayToken}`
+    ? `${data.instanceUrl}#token=${data.gatewayToken}`
     : data.instanceUrl;
 
   return (
@@ -367,9 +360,6 @@ export function InstanceStatus() {
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Use this URL for Telegram, Discord, and Slack webhook callbacks.
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Token: {data.gatewayToken ? `${data.gatewayToken.substring(0, 8)}... (present)` : <span className="text-destructive">MISSING</span>}
                 </p>
               </>
             ) : (
