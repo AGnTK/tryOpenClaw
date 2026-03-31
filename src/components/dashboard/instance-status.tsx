@@ -67,6 +67,8 @@ export function InstanceStatus() {
       if (res.ok) {
         setData(await res.json());
       }
+    } catch {
+      // Network errors during polling are expected (offline, tab sleep, etc.)
     } finally {
       setLoading(false);
     }
@@ -84,6 +86,8 @@ export function InstanceStatus() {
     try {
       await fetch("/api/instance/restart", { method: "POST" });
       setTimeout(fetchStatus, 3000);
+    } catch {
+      // Network error — next poll will pick up state
     } finally {
       setRestarting(false);
     }
@@ -95,6 +99,8 @@ export function InstanceStatus() {
     try {
       await fetch("/api/instance/start", { method: "POST" });
       setTimeout(fetchStatus, 3000);
+    } catch {
+      // Network error — next poll will pick up state
     } finally {
       setStarting(false);
     }
@@ -106,6 +112,8 @@ export function InstanceStatus() {
     try {
       await fetch("/api/instance/stop", { method: "POST" });
       setTimeout(fetchStatus, 3000);
+    } catch {
+      // Network error — next poll will pick up state
     } finally {
       setStopping(false);
     }
